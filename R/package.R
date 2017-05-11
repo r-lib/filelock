@@ -1,0 +1,9 @@
+
+#' Portable File Locking
+#'
+#' Place an exclusive or shared lock on a file. It uses `LockFile` on
+#' Windows and `fcntl` locks on Unix-like systems.
+#'
+#' @docType package
+#' @name filelock
+NULL

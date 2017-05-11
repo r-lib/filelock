@@ -1,0 +1,16 @@
+Package: filelock
+Title: Portable File Locking
+Version: 0.0.0.9000
+Author: Gábor Csárdi
+Maintainer: Gábor Csárdi <csardi.gabor@gmail.com>
+Description: Place an exclusive or shared lock on a file. It uses 'LockFile'
+    on Windows and 'fcntl' locks on Unix-like systems.
+License: MIT + file LICENSE
+LazyData: true
+URL: https://github.com/gaborcsardi/filelock#readme
+BugReports: https://github.com/gaborcsardi/filelock/issues
+RoxygenNote: 6.0.1.9000
+Roxygen: list(markdown = TRUE)
+Suggests: 
+    testthat
+Encoding: UTF-8
