@@ -1,0 +1,7 @@
+
+OBJECTS = init.o filelock-windows.o
+
+all: clean
+
+clean:
+	rm -f $(SHLIB) $(OBJECTS)
