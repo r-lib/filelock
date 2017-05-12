@@ -12,15 +12,20 @@ NULL
 #' @export
 
 lock <- function(path, exclusive = TRUE, timeout = Inf) {
-  assert_that(is_string(path))
-  assert_that(is_flag(exclusive))
-  assert_that(is_timeout(timeout))
-  .Call(c_filelock_lock, normalizePath(path), exclusive, timeout)
+
+  stopifnot(is_string(path))
+  stopifnot(is_flag(exclusive))
+  stopifnot(is_timeout(timeout))
+
+  ## Inf if encoded as -1 in our C code
+  if (timeout == Inf) timeout <- -1L
+
+  .Call(c_filelock_lock, normalizePath(path, mustWork = FALSE), exclusive,
+        as.integer(timeout))
 }
 
 #' @export
 
-unlock <- function(path) {
-  assert_that(is_string(path))
-  .Call("c_filelock_unlock", normalizePath(path))
+unlock <- function(lock) {
+  .Call(c_filelock_unlock, lock)
 }
