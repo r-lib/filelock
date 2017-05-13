@@ -12,6 +12,7 @@ BugReports: https://github.com/gaborcsardi/filelock/issues
 RoxygenNote: 6.0.1.9000
 Roxygen: list(markdown = TRUE)
 Suggests:
+    callr,
     covr,
     testthat
 Encoding: UTF-8
