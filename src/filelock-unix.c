@@ -13,7 +13,7 @@ static int filelock_dummy_object = 0;
 
 struct sigaction filelock_old_sa;
 
-void filelock_finalizer(SEXP x) {
+void filelock__finalizer(SEXP x) {
   void *ptr = R_ExternalPtrAddr(x);
   SEXP des;
 
@@ -25,7 +25,7 @@ void filelock_finalizer(SEXP x) {
   R_ClearExternalPtr(x);
 }
 
-void filelock_alarm_callback (int signum) {
+void filelock__alarm_callback (int signum) {
   /* Restore signal handler */
   sigaction(SIGALRM, &filelock_old_sa, 0);
 }
@@ -59,7 +59,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   } else if (c_timeout == -1) {
     ret = fcntl(filedes, F_SETLKW, &lck);
 
-    /* Handle timeout and errors */
+    /* Handle errors */
     if (ret == -1) {
       close(filedes);
       error("Cannot lock file: '%s': %s", c_path, strerror(errno));
@@ -75,7 +75,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
     timer.it_interval.tv_usec = 0;
 
     memset(&sa, 0, sizeof (sa));
-    sa.sa_handler = &filelock_alarm_callback;
+    sa.sa_handler = &filelock__alarm_callback;
     sigaction(SIGALRM, &sa, &filelock_old_sa);
 
     setitimer(ITIMER_REAL, &timer, 0);
@@ -91,7 +91,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
 
   ptr = PROTECT(R_MakeExternalPtr(&filelock_dummy_object,
 				  ScalarInteger(filedes), R_NilValue));
-  R_RegisterCFinalizerEx(ptr, filelock_finalizer, 0);
+  R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
 
   result = PROTECT(allocVector(VECSXP, 2));
   SET_VECTOR_ELT(result, 0, ptr);
