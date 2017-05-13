@@ -168,7 +168,13 @@ test_that("wait forever", {
   if (px2$is_alive()) {
     px1$kill()
     px2$kill()
-    expect_true(px2$get_exit_status() < 0)
+
+    ## Killed process has exit status 1 on windows
+    if (.Platform$OS.type == "windows") {
+      expect_true(px2$get_exit_status() == 1)
+    } else {
+      expect_true(px2$get_exit_status() < 0)
+    }
   } else {
     px1$kill()
     px2$kill()
