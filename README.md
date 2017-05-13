@@ -28,6 +28,46 @@ devtools::install_github("gaborcsardi/filelock")
 library(filelock)
 ```
 
+This is R process 1, it gets an exclusive lock. If you want to lock file
+`myfile`, always create a
+separate lock file instead of placing the lock on this file directly!
+
+```r
+R1> lck <- lock("/tmp/myfile.lck")
+```
+
+This is R process 2, it fails to acquire a lock.
+
+```r
+R2> lock("/tmp/myfile.lck", timeout = 0)
+```
+
+Specifying a timeout interval, before giving up:
+
+```r
+R2> lock("/tmp/myfile.lck", timeout = 5000)
+```
+
+Wait indefinetely:
+```r
+R2> lock("/tmp/myfile.lck", timeout = Inf)
+```
+
+Once R process 1 released the lock (or terminated), R process 2 can
+acquire the lock:
+
+```r
+R1> unlock(lck)
+```
+
+```r
+R2> lock("/tmp/myfile.lck")
+```
+
+```
+#> Lock on ‘/tmp/myfile.lck’
+```
+
 ## Documentation
 
 ### Warning

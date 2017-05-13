@@ -169,7 +169,7 @@ lock("/tmp/myfile.lck", timeout = 0)
 ## Let's wait for 5 seconds, before giving up
 lock("/tmp/myfile.lck", timeout = 5000)
 
-## Wait indefinetely before giving up
+## Wait indefinetely
 lock("/tmp/myfile.lck", timeout = Inf)
 }
 }
