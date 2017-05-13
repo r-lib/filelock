@@ -152,11 +152,10 @@ lock <- function(path, exclusive = TRUE, timeout = Inf) {
   ## Inf if encoded as -1 in our C code
   if (timeout == Inf) timeout <- -1L
 
-  structure(
-    .Call(c_filelock_lock, normalizePath(path, mustWork = FALSE), exclusive,
-          as.integer(timeout)),
-    class = "filelock_lock"
-  )
+  res <- .Call(c_filelock_lock, normalizePath(path, mustWork = FALSE), exclusive,
+               as.integer(timeout))
+
+  if (is.null(res)) res else structure(res, class = "filelock_lock")
 }
 
 #' @export
