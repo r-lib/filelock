@@ -96,7 +96,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   const char *c_path = CHAR(STRING_ELT(path, 0));
   int c_exclusive = LOGICAL(exclusive)[0];
   int c_timeout = INTEGER(timeout)[0];
-  SEXP ptr;
+  SEXP ptr, result;
   int ret, locked = 1;		/* assume the best :) */
 
   /* Need overlapped I/O for timeouts */
@@ -137,18 +137,22 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   ptr = PROTECT(R_MakeExternalPtr(filehandle, R_NilValue, R_NilValue));
   R_RegisterCFinalizerEx(ptr, filelock_finalizer, 0);
 
-  UNPROTECT(1);
+  result = PROTECT(allocVector(VECSXP, 2));
+  SET_VECTOR_ELT(result, 0, ptr);
+  SET_VECTOR_ELT(result, 1, path);
+
+  UNPROTECT(2);
   return ptr;
 }
 
 SEXP filelock_unlock(SEXP lock) {
-  HANDLE ptr = (HANDLE) R_ExternalPtrAddr(lock);
+  HANDLE ptr = (HANDLE) R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
 
   if (ptr) {
     OVERLAPPED ov = {0};
     UnlockFileEx(ptr, 0, 1, 0, &ov); /* ignore errors */
     CloseHandle(ptr);		     /* ignore errors */
-    R_ClearExternalPtr(lock);
+    R_ClearExternalPtr(VECTOR_ELT(lock, 0));
   }
 
   return ScalarLogical(1);

@@ -36,7 +36,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   int c_exclusive = LOGICAL(exclusive)[0];
   int c_timeout = INTEGER(timeout)[0];
   int filedes, ret;
-  SEXP ptr;
+  SEXP ptr, result;
 
   lck.l_type = c_exclusive ? F_WRLCK : F_RDLCK;
   lck.l_whence = SEEK_SET;
@@ -93,18 +93,27 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
 				  ScalarInteger(filedes), R_NilValue));
   R_RegisterCFinalizerEx(ptr, filelock_finalizer, 0);
 
-  UNPROTECT(1);
-  return ptr;
+  result = PROTECT(allocVector(VECSXP, 2));
+  SET_VECTOR_ELT(result, 0, ptr);
+  SET_VECTOR_ELT(result, 1, path);
+
+  UNPROTECT(2);
+  return result;
 }
 
 SEXP filelock_unlock(SEXP lock) {
-  void *ptr = R_ExternalPtrAddr(lock);
+  void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
 
   if (ptr) {
-    SEXP des = R_ExternalPtrTag(lock);
+    SEXP des = R_ExternalPtrTag(VECTOR_ELT(lock, 0));
     close(INTEGER(des)[0]);
-    R_ClearExternalPtr(lock);
+    R_ClearExternalPtr(VECTOR_ELT(lock, 0));
   }
 
   return ScalarLogical(1);
+}
+
+SEXP filelock_is_unlocked(SEXP lock) {
+  void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
+  return ScalarLogical(! ptr);
 }

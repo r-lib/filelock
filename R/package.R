@@ -20,12 +20,27 @@ lock <- function(path, exclusive = TRUE, timeout = Inf) {
   ## Inf if encoded as -1 in our C code
   if (timeout == Inf) timeout <- -1L
 
-  .Call(c_filelock_lock, normalizePath(path, mustWork = FALSE), exclusive,
-        as.integer(timeout))
+  structure(
+    .Call(c_filelock_lock, normalizePath(path, mustWork = FALSE), exclusive,
+          as.integer(timeout)),
+    class = "filelock_lock"
+  )
 }
 
 #' @export
 
 unlock <- function(lock) {
   .Call(c_filelock_unlock, lock)
+}
+
+#' @export
+
+print.filelock_lock <- function(x, ...) {
+  unlocked <- .Call(c_filelock_is_unlocked, x)
+  cat(
+    if (unlocked) "Unlocked lock on " else "Lock on ",
+    sQuote(x[[2]]), "\n",
+    sep = ""
+  )
+  invisible(x)
 }
