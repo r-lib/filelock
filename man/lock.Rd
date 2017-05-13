@@ -2,27 +2,174 @@
 % Please edit documentation in R/package.R
 \name{lock}
 \alias{lock}
+\alias{filelock}
 \alias{unlock}
-\title{File locking and unlocking}
+\title{Advisory File Locking and Unlocking}
 \usage{
 lock(path, exclusive = TRUE, timeout = Inf)
 
 unlock(lock)
 }
 \arguments{
-\item{path}{Path to the file to lock.}
+\item{path}{Path to the file to lock. If the file does not exist, it
+will be created. \emph{Do not place the lock on a file that you want to
+read from or write to!} *Always use a special lock file. See details
+below.}
 
-\item{exclusive}{Whether to acquire an exclusive lock.}
+\item{exclusive}{Whether to acquire an exclusive lock. An exclusive
+lock gives the process exclusive access to the file, no other
+processes can place any kind of lock on it. A non-exclusive lock is a
+shared lock. Multiple processes can hold a shared lock on the same
+file. A process that writes to a file typically requests an
+exclusive lock, and a process that reads from it typically requests a
+shared lock.}
 
 \item{timeout}{Timeout to acquire the lock in milliseconds. If \code{Inf},
 then the process will wait indefinitely to acquire the lock. If zero,
-then it returns immediately.}
+then the function it returns immediately, with or without acquiring
+the lock}
 
-\item{lock}{The lock object to unlock.}
+\item{lock}{The lock object to unlock. It is not an error to try to
+unlock an already unlocked lock. It is not possible to lock an
+unlocked lock again, a new lock has to be requested.}
+}
+\value{
+\code{lock} returns a \code{filelock_lock} object if the lock was
+successfully acquired, and \code{NULL} if a timeout happened.
+
+\code{unlock} returns \code{TRUE}, always.
 }
 \description{
-TODO: details.
+There are two kinds of locks, \emph{exclusive} and \emph{shared}, see the
+\code{exclusive} argument and other details below.
 }
+\section{Warning}{
+
+Always use special files for locking. I.e. if you want to restict access
+to a certain file, do \emph{not} place the lock on this file. Create a special
+file, e.g. by appending \code{.lock} to the original file name and place the
+lock on that. (The \code{lock()} function creates the file for you, actually,
+if it does not exist.) Reading from or writing to a locked file has
+undefined behavior! (See more about this below at the Internals Section.)
+
+It is hard to determine whether and when it is safe to remove these
+special files, so our current recommendation is just to leave them
+around.
+
+It is best to leave the special lock file empty, simply because on some
+OSes you cannot write to it (or read from it), once the lock is in place.
+}
+
+\section{Advisory Locks}{
+
+All locks set by this package might be advisory. A process that does not
+respect this locking machanism may be able to read and write the locked
+file, or even remove it (assuming it has capabilities to do so).
+}
+
+\section{Unlock on Termination}{
+
+If a process terminates (with a normal exit, a crash or on a signal), the
+lock(s) it is holding are automatically released.
+
+If the R object that represents the lock (the return value of \code{lock})
+goes out of scope, then the lock will be released automatically as
+soon as the object is garbage collected. This is more of a safety
+mechanism, and the user should still \code{unlock()} locks manually, maybe
+using \code{\link[base:on.exit]{base::on.exit()}}, so that the lock is released in case of errors
+as well, as soon as possible.
+}
+
+\section{Special File Systems}{
+
+File locking needs support from the file system, and some \emph{non-standard}
+file systems do not support it. For example on network file systems
+like NFS or CIFS, user mode file systems like \code{sshfs} or \code{ftpfs}, etc.,
+support might vary. Recent Linux versions and recent NFS versions (from
+version 3) do support file locking, if enabled.
+
+In theory it is possible to simply test for lock support, using two
+child processes and a timeout, but \code{filelock} does not do this
+currently.
+}
+
+\section{Locking Part of a File}{
+
+While this is possible in general, \code{filelock} does not suport it
+currently. The main purpose of \code{filelock} is to lock using special
+lock files, and locking part of these is not really useful.
+}
+
+\section{Internals on Unix}{
+
+On Unix (i.e. Linux, macOS, etc.), we use \code{fcntl} to acquire and
+release the locks. You can read more about it here:
+https://www.gnu.org/software/libc/manual/html_node/File-Locks.html
+
+Some important points:
+\itemize{
+\item The lock is put on a file descriptor, which is kept open, until the
+lock is released.
+\item A process can only have one kind of lock set for a given file.
+\item When any file descriptor for that file is closed by the process, all
+of the locks that process holds on that file are released, even if
+the locks were made using other descriptors that remain open.
+Note that in R, using a one-shot function call to modify the file
+opens and closes a file descriptor to it, so the lock will be
+released. (This is one of the main reasons for using special lock
+files, instead of putting the lock on the actual file.)
+\item Locks are not inherited by child processes created using fork.
+\item For lock requests with finite timeout intervals, we set an alarm, and
+temporarily install a signal handler for it. R is single threaded,
+so no other code can be running, while the process is waiting to
+acquire the lock. The signal handler is restored to its original value
+immediately after the lock is acquired or the timeout expires.
+(It is actually restored from the signal handler, so there should be
+no race conditions here. However, if multiple \code{SIGALRM} signals are
+delivered via a single call to the signal handler, then alarms might
+get lost. Currently base R does not use the \code{SIGALRM} signal for
+anything, but other packages might.)
+}
+}
+
+\section{Internals on Windows}{
+
+On Windows, \code{LockFileEx} is used to create the lock on the file.
+If a finite timeout is specified for the lock request, asynchronous
+(overlapped) I/O is used to wait for the locking event with a timeout.
+See more about \code{LockFileEx} here:
+https://msdn.microsoft.com/en-us/library/aa365203.aspx
+
+Some important points:
+\itemize{
+\item \code{LockFileEx} locks are mandatory (as opposed to advisory), so indeed
+no other processes have access to the locked file. Actually, even the
+locking process has no access to it through a different file handle,
+than the one used for locking. In general, R cannot read from the
+locked file, and cannot write to it. (Although, the current R version
+does not fail, it just does nothing, which is quite puzzling.)
+Remember, always use a special lock file, instead of putting the lock
+on the main file, so that you are not affected by these problems.
+\item Inherited handles do not provide access to the child process.
+}
+}
+
 \examples{
-# TODO
+\dontrun{
+## -------------------------------------------------------------
+## R process 1 gets an exclusive lock
+## Warning: if you want to lock file 'myfile', always create a
+## separate lock file instead of placing the lock on this file directly!
+lck <- lock("/tmp/myfile.lck")
+
+## -------------------------------------------------------------
+## R process 2 fails to acquire a lock
+lock("/tmp/myfile.lck", timeout = 0)
+
+## Let's wait for 5 seconds, before giving up
+lock("/tmp/myfile.lck", timeout = 5000)
+
+## Wait indefinetely before giving up
+lock("/tmp/myfile.lck", timeout = Inf)
+}
 }
