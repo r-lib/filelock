@@ -9,7 +9,20 @@
 #' @name filelock
 NULL
 
+
+#' File locking and unlocking
+#'
+#' TODO: details.
+#'
+#' @param path Path to the file to lock.
+#' @param exclusive Whether to acquire an exclusive lock.
+#' @param timeout Timeout to acquire the lock in milliseconds. If `Inf`,
+#'   then the process will wait indefinitely to acquire the lock. If zero,
+#'   then it returns immediately.
+#' @param lock The lock object to unlock.
 #' @export
+#' @examples
+#' # TODO
 
 lock <- function(path, exclusive = TRUE, timeout = Inf) {
 
@@ -28,6 +41,7 @@ lock <- function(path, exclusive = TRUE, timeout = Inf) {
 }
 
 #' @export
+#' @rdname lock
 
 unlock <- function(lock) {
   .Call(c_filelock_unlock, lock)
