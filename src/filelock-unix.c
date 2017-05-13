@@ -51,7 +51,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
     ret = fcntl(filedes, F_SETLK, &lck);
     if (ret == -1) {
       close(filedes);
-      if (errno == EAGAIN || errno == EACCES) return ScalarLogical(0);
+      if (errno == EAGAIN || errno == EACCES) return R_NilValue;
       error("Cannot lock file: '%s': %s", c_path, strerror(errno));
     }
 
@@ -84,7 +84,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
     /* Handle timeout and errors */
     if (ret == -1) {
       close(filedes);
-      if (errno == EINTR) return ScalarLogical(0);
+      if (errno == EINTR) return R_NilValue;
       error("Cannot lock file: '%s': %s", c_path, strerror(errno));
     }
   }
