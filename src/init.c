@@ -19,3 +19,8 @@ void R_init_filelock(DllInfo *dll) {
   R_useDynamicSymbols(dll, FALSE);
   R_forceSymbols(dll, TRUE);
 }
+
+SEXP filelock_is_unlocked(SEXP lock) {
+  void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
+  return ScalarLogical(! ptr);
+}
