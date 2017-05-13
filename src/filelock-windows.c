@@ -142,7 +142,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   SET_VECTOR_ELT(result, 1, path);
 
   UNPROTECT(2);
-  return ptr;
+  return result;
 }
 
 SEXP filelock_unlock(SEXP lock) {
