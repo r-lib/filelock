@@ -15,4 +15,6 @@ Suggests:
     callr,
     covr,
     testthat
+Remotes: 
+    r-pkgs/callr@background
 Encoding: UTF-8
