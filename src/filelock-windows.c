@@ -4,6 +4,8 @@
 
 #include <windows.h>
 
+#define FILELOCK_INTERRUPT_INTERVAL 200
+
 void filelock__error(const char *str, DWORD errorcode) {
   LPVOID lpMsgBuf;
   char *msg;
@@ -55,11 +57,34 @@ int filelock__lock_now(HANDLE file, int exclusive, int *locked) {
 int filelock__lock_wait(HANDLE file, int exclusive) {
   OVERLAPPED ov = { 0 };
   DWORD dwFlags = exclusive ? LOCKFILE_EXCLUSIVE_LOCK : 0;
-  if (!LockFileEx(file, dwFlags, 0, 1, 0, &ov)) {
-    return GetLastError();
-  } else {
-    return 0;
+  BOOL res;
+
+  while (1) {
+    ov.hEvent = CreateEvent(NULL, 0, 0, NULL);
+    res = LockFileEx(file, dwFlags, 0, 1, 0, &ov);
+    if (!res) {
+      DWORD error = GetLastError();
+      DWORD wres;
+      if (error != ERROR_IO_PENDING) filelock__error("Locking file: ", error);
+
+      wres = WaitForSingleObject(ov.hEvent, FILELOCK_INTERRUPT_INTERVAL);
+      CloseHandle(ov.hEvent);
+      if (wres == WAIT_TIMEOUT) {
+	/* we'll try again */
+      } else if (wres == WAIT_OBJECT_0) {
+	return 0;
+      } else {
+	filelock__error("Locking file (timeout): ", GetLastError());
+      }
+    } else {
+      return 0;
+    }
+
+    /* Check for interrupt and try again */
+    R_CheckUserInterrupt();
   }
+
+  return 0;
 }
 
 int filelock__lock_timeout(HANDLE file, int exclusive, int timeout,
@@ -67,29 +92,44 @@ int filelock__lock_timeout(HANDLE file, int exclusive, int timeout,
   OVERLAPPED ov = { 0 };
   DWORD dwFlags = exclusive ? LOCKFILE_EXCLUSIVE_LOCK : 0;
   BOOL res;
+  int timeleft = timeout;
 
-  ov.hEvent = CreateEvent(NULL, 0, 0, NULL);
+  /* This is the default, a timeout */
+  *locked = 0;
 
-  res = LockFileEx(file, dwFlags, 0, 1, 0, &ov);
-  if (!res) {
-    DWORD error = GetLastError();
-    DWORD wres;
-    if (error != ERROR_IO_PENDING) {
+  while (timeleft > 0) {
+
+    int waitnow = timeleft < FILELOCK_INTERRUPT_INTERVAL ? timeleft :
+      FILELOCK_INTERRUPT_INTERVAL;
+
+    ov.hEvent = CreateEvent(NULL, 0, 0, NULL);
+
+    res = LockFileEx(file, dwFlags, 0, 1, 0, &ov);
+    if (!res) {
+      DWORD error = GetLastError();
+      DWORD wres;
+      if (error != ERROR_IO_PENDING) filelock__error("Locking file: ", error);
+
+      wres = WaitForSingleObject(ov.hEvent, waitnow);
       CloseHandle(ov.hEvent);
-      filelock__error("Locking file: ", error);
-    }
-    wres = WaitForSingleObject(ov.hEvent, timeout);
-    if (wres == WAIT_TIMEOUT) {
-      *locked = 0;
-    } else if (wres == WAIT_OBJECT_0) {
-      *locked = 1;
+      if (wres == WAIT_TIMEOUT) {
+	/* we'll try again */
+      } else if (wres == WAIT_OBJECT_0) {
+	*locked = 1;
+	return 0;
+      } else {
+	filelock__error("Locking file (timeout): ", GetLastError());
+      }
     } else {
-      CloseHandle(ov.hEvent);
-      filelock__error("Locking file (timeout): ", GetLastError());
+      *locked = 1;
+      return 0;
     }
+
+    /* Check for interrupt and try again */
+    R_CheckUserInterrupt();
+    timeleft -= FILELOCK_INTERRUPT_INTERVAL;
   }
 
-  CloseHandle(ov.hEvent);
   return 0;
 }
 
@@ -116,6 +156,16 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
     filelock__error("Opening file: ", GetLastError());
   }
 
+  /* We create the result object here, so that the finalizer
+     will close the file handle on error or interrupt. */
+
+  ptr = PROTECT(R_MakeExternalPtr(filehandle, R_NilValue, R_NilValue));
+  R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
+
+  result = PROTECT(allocVector(VECSXP, 2));
+  SET_VECTOR_ELT(result, 0, ptr);
+  SET_VECTOR_ELT(result, 1, path);
+
   /* Give it a try, fail immediately */
   if (c_timeout == 0) {
     ret = filelock__lock_now(filehandle, c_exclusive, &locked);
@@ -131,17 +181,13 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   }
 
   if (ret) {
-    CloseHandle(filehandle);
     filelock__error("Lock file: ", ret);
   }
-  if (!locked) return R_NilValue;
 
-  ptr = PROTECT(R_MakeExternalPtr(filehandle, R_NilValue, R_NilValue));
-  R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
-
-  result = PROTECT(allocVector(VECSXP, 2));
-  SET_VECTOR_ELT(result, 0, ptr);
-  SET_VECTOR_ELT(result, 1, path);
+  if (!locked) {
+    UNPROTECT(2);
+    return R_NilValue;
+  }
 
   UNPROTECT(2);
   return result;
