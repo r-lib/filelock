@@ -16,5 +16,5 @@ Suggests:
     covr,
     testthat
 Remotes: 
-    r-pkgs/callr@background
+    r-pkgs/callr
 Encoding: UTF-8
