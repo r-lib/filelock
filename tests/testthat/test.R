@@ -116,6 +116,9 @@ test_that("timeout", {
 
 test_that("timeout 2", {
 
+  ## Thy don't like tests with timings on CRAN
+  skip_on_cran()
+
   tmp <- tempfile()
 
   px1_opts <- callr::r_process_options(
@@ -129,12 +132,12 @@ test_that("timeout 2", {
   px1 <- callr::r_process$new(px1_opts)
 
   px2_opts <- callr::r_process_options(
-    func = function(path) filelock::lock(path, timeout = 2000),
+    func = function(path) filelock::lock(path, timeout = 3000),
     args = list(path = tmp)
   )
   px2 <- callr::r_process$new(px2_opts)
 
-  px2$wait(timeout = 3000)
+  px2$wait(timeout = 5000)
   if (! px2$is_alive()) {
     res <- px2$get_result()
     expect_equal(class(res), "filelock_lock")
@@ -146,6 +149,9 @@ test_that("timeout 2", {
 })
 
 test_that("wait forever", {
+
+  ## Thy don't like tests with timings on CRAN
+  skip_on_cran()
 
   tmp <- tempfile()
 
@@ -164,7 +170,7 @@ test_that("wait forever", {
   )
   px2 <- callr::r_process$new(px2_opts)
 
-  px2$wait(timeout = 1000)
+  px2$wait(timeout = 2000)
   if (px2$is_alive()) {
     px1$kill()
     px2$kill()
