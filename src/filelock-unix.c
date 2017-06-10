@@ -9,6 +9,8 @@
 #include <signal.h>
 #include <string.h>
 
+#include "filelock.h"
+
 #define FILELOCK_INTERRUPT_INTERVAL 200
 
 static int filelock_dummy_object = 0;
@@ -78,13 +80,32 @@ int filelock__interruptible(int filedes, struct flock *lck,
   return ret;
 }
 
+SEXP filelock__make_lock_handle(const char *c_path, int filedes) {
+  SEXP ptr, result;
+
+  ptr = PROTECT(R_MakeExternalPtr(&filelock_dummy_object,
+				  ScalarInteger(filedes), R_NilValue));
+  R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
+
+  result = PROTECT(allocVector(VECSXP, 2));
+  SET_VECTOR_ELT(result, 0, ptr);
+  SET_VECTOR_ELT(result, 1, mkString(c_path));
+
+  UNPROTECT(2);
+  return result;
+}
+
 SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   struct flock lck;
   const char *c_path = CHAR(STRING_ELT(path, 0));
   int c_exclusive = LOGICAL(exclusive)[0];
   int c_timeout = INTEGER(timeout)[0];
   int filedes, ret;
-  SEXP ptr, result;
+  SEXP result;
+
+  /* Check if this file was already locked. */
+  filelock__list_t *node = filelock__list_find(c_path);
+  if (node) return filelock__make_lock_handle(c_path, node->file);
 
   lck.l_type = c_exclusive ? F_WRLCK : F_RDLCK;
   lck.l_whence = SEEK_SET;
@@ -97,20 +118,14 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   /* We create the retult object here, so that the finalizer
      will close the file descriptor on error or interrupt. */
 
-  ptr = PROTECT(R_MakeExternalPtr(&filelock_dummy_object,
-				  ScalarInteger(filedes), R_NilValue));
-  R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
-
-  result = PROTECT(allocVector(VECSXP, 2));
-  SET_VECTOR_ELT(result, 0, ptr);
-  SET_VECTOR_ELT(result, 1, path);
+  result = PROTECT(filelock__make_lock_handle(c_path, filedes));
 
   /* One shot only? Do not block if cannot lock */
   if (c_timeout == 0) {
     ret = fcntl(filedes, F_SETLK, &lck);
     if (ret == -1) {
       if (errno == EAGAIN || errno == EACCES) {
-	UNPROTECT(2);
+	UNPROTECT(1);
 	return R_NilValue;
       }
       error("Cannot lock file: '%s': %s", c_path, strerror(errno));
@@ -123,11 +138,13 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
 
   /* Failed to acquire the lock */
   if (ret) {
-    UNPROTECT(2);
+    UNPROTECT(1);
     return R_NilValue;
   }
 
-  UNPROTECT(2);
+  if (filelock__list_add(c_path, filedes)) error("Not enough memory");
+
+  UNPROTECT(1);
   return result;
 }
 
@@ -136,9 +153,22 @@ SEXP filelock_unlock(SEXP lock) {
 
   if (ptr) {
     SEXP des = R_ExternalPtrTag(VECTOR_ELT(lock, 0));
+    const char *c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
+    filelock__list_remove(c_path);
     close(INTEGER(des)[0]);
     R_ClearExternalPtr(VECTOR_ELT(lock, 0));
   }
 
   return ScalarLogical(1);
+}
+
+SEXP filelock_is_unlocked(SEXP lock) {
+  void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
+  if (ptr) {
+    const char *c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
+    int inlist = filelock__list_find(c_path) != 0;
+    return ScalarLogical(! inlist);
+  } else {
+    return ScalarLogical(1);
+  }
 }

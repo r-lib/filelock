@@ -218,3 +218,63 @@ test_that("wait forever, lock released", {
     stop("Process did not finish, something is wrong")
   }
 })
+
+test_that("locking the same file twice", {
+  tmp <- tempfile()
+
+  expect_silent({
+    lck <- lock(tmp, exclusive = TRUE)
+  })
+
+  expect_silent({
+    lck2 <- lock(tmp, exclusive = TRUE)
+  })
+
+  expect_equal(lck, lck2)
+
+  unlock(lck)
+  expect_equal(lck, lck2)
+})
+
+test_that("locking is idempotent", {
+  tmp <- tempfile()
+
+  expect_silent({
+    lck <- lock(tmp, exclusive = TRUE)
+    lck2 <- lock(tmp, exclusive = TRUE)
+    unlock(lck)
+  })
+
+  res <- callr::r_safe(
+    function(path) filelock::lock(path, timeout = 0),
+    list(path = tmp),
+    timeout = 1,
+    spinner = FALSE
+  )
+  expect_equal(class(res), "filelock_lock")
+
+  expect_silent({
+    lck3 <- lock(tmp, exclusive = TRUE)
+  })
+
+  res <- callr::r_safe(
+    function(path) filelock::lock(path, timeout = 0),
+    list(path = tmp),
+    timeout = 1,
+    spinner = FALSE
+  )
+
+  expect_null(res)
+  unlock(lck3)
+})
+
+test_that("unlock applies to other handle as well", {
+
+  tmp <- tempfile()
+  lck <- lock(tmp, exclusive = TRUE)
+  lck2 <- lock(tmp, exclusive = TRUE)
+  unlock(lck)
+
+  expect_output(print(lck), "Unlocked lock")
+  expect_output(print(lck2), "Unlocked lock")
+})

@@ -98,7 +98,8 @@
 #' * Inherited handles do not provide access to the child process.
 #'
 #' @param path Path to the file to lock. If the file does not exist, it
-#'   will be created. *Do not place the lock on a file that you want to
+#'   will be created, but the directory of the file must exist.
+#'   *Do not place the lock on a file that you want to
 #'   read from or write to!* *Always use a special lock file. See details
 #'   below.
 #' @param exclusive Whether to acquire an exclusive lock. An exclusive
@@ -152,8 +153,14 @@ lock <- function(path, exclusive = TRUE, timeout = Inf) {
   ## Inf if encoded as -1 in our C code
   if (timeout == Inf) timeout <- -1L
 
-  res <- .Call(c_filelock_lock, normalizePath(path, mustWork = FALSE), exclusive,
-               as.integer(timeout))
+  dn <- dirname(path)
+  ndn <- normalizePath(dn)
+  if (!file.exists(ndn)) {
+    stop("Directory of lock file does not exist: '", dn, "'")
+  }
+  path <- file.path(ndn, basename(path))
+
+  res <- .Call(c_filelock_lock, path, exclusive, as.integer(timeout))
 
   if (is.null(res)) res else structure(res, class = "filelock_lock")
 }

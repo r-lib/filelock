@@ -1,5 +1,5 @@
 
-OBJECTS = init.o filelock-unix.o
+OBJECTS = init.o filelock-unix.o locklist.o
 
 all: clean
 

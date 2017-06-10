@@ -245,3 +245,8 @@ SEXP filelock_unlock(SEXP lock) {
   R_ClearExternalPtr(VECTOR_ELT(lock, 0));
   return ScalarLogical(1);
 }
+
+SEXP filelock_is_unlocked(SEXP lock) {
+  void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
+  return ScalarLogical(! ptr);
+}

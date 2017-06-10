@@ -1,11 +1,5 @@
 
-#include <R.h>
-#include <R_ext/Rdynload.h>
-#include <Rinternals.h>
-
-SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout);
-SEXP filelock_unlock(SEXP path);
-SEXP filelock_is_unlocked(SEXP lock);
+#include "filelock.h"
 
 static const R_CallMethodDef callMethods[]  = {
   { "filelock_lock",        (DL_FUNC) &filelock_lock,         3 },
@@ -18,9 +12,4 @@ void R_init_filelock(DllInfo *dll) {
   R_registerRoutines(dll, NULL, callMethods, NULL, NULL);
   R_useDynamicSymbols(dll, FALSE);
   R_forceSymbols(dll, TRUE);
-}
-
-SEXP filelock_is_unlocked(SEXP lock) {
-  void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
-  return ScalarLogical(! ptr);
 }
