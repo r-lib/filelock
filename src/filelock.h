@@ -3,6 +3,10 @@
 #include <R_ext/Rdynload.h>
 #include <Rinternals.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout);
 SEXP filelock_unlock(SEXP path);
 SEXP filelock_is_unlocked(SEXP lock);

@@ -116,7 +116,7 @@ test_that("timeout", {
 
 test_that("timeout 2", {
 
-  ## Thy don't like tests with timings on CRAN
+  ## They don't like tests with timings on CRAN
   skip_on_cran()
 
   tmp <- tempfile()
@@ -132,7 +132,7 @@ test_that("timeout 2", {
   px1 <- callr::r_process$new(px1_opts)
 
   px2_opts <- callr::r_process_options(
-    func = function(path) filelock::lock(path, timeout = 3000),
+    func = function(path) filelock::lock(path, timeout = 2000),
     args = list(path = tmp)
   )
   px2 <- callr::r_process$new(px2_opts)

@@ -4,6 +4,8 @@
 
 #include <windows.h>
 
+#include "filelock.h"
+
 #define FILELOCK_INTERRUPT_INTERVAL 200
 
 typedef struct {
@@ -59,13 +61,12 @@ void filelock__finalizer(SEXP x) {
   R_ClearExternalPtr(x);
 }
 
-int filelock__lock_now(filelock__handle_t *handle, int exclusive, int *locked) {
+int filelock__lock_now(HANDLE file, int exclusive, int *locked) {
   DWORD dwFlags = LOCKFILE_FAIL_IMMEDIATELY;
-  HANDLE *file = &handle->file;
   OVERLAPPED ov = { 0 };
   if (exclusive) dwFlags |= LOCKFILE_EXCLUSIVE_LOCK;
   REprintf("locking now\n");
-  if (! LockFileEx(*file, dwFlags, 0, 1, 0, &ov)) {
+  if (! LockFileEx(file, dwFlags, 0, 1, 0, &ov)) {
     DWORD error = GetLastError();
     REprintf("no: %d\n", error);
     *locked = 0;
@@ -81,14 +82,13 @@ int filelock__lock_now(filelock__handle_t *handle, int exclusive, int *locked) {
   }
 }
 
-int filelock__lock_wait(filelock__handle_t *handle, int exclusive) {
+int filelock__lock_wait(HANDLE file, int exclusive) {
   DWORD dwFlags = exclusive ? LOCKFILE_EXCLUSIVE_LOCK : 0;
   BOOL res;
-  HANDLE *file = &handle->file;
   OVERLAPPED ov = { 0 };
 
   ov.hEvent = CreateEvent(NULL, 0, 0, NULL);
-  res = LockFileEx(*file, dwFlags, 0, 1, 0, &ov);
+  res = LockFileEx(file, dwFlags, 0, 1, 0, &ov);
 
   if (!res) {
     DWORD err = GetLastError();
@@ -105,16 +105,17 @@ int filelock__lock_wait(filelock__handle_t *handle, int exclusive) {
 	CloseHandle(ov.hEvent);
 	return 0;
       } else if (wres == WAIT_FAILED) {
-	CancelIo(*file);
+	CancelIo(file);
 	CloseHandle(ov.hEvent);
 	filelock__error("Locking file (timeout): ", GetLastError());
       }
 
       /* Check for interrupt and try again */
       if (filelock__is_interrupt_pending()) {
-	CancelIo(*file);
+	CancelIo(file);
 	CloseHandle(ov.hEvent);
-	filelock__destroy_handle(handle);
+	UnlockFileEx(file, 0, 1, 0, &ov); /* ignore errors */
+	CloseHandle(file);		  /* ignore errors */
 	error("Locking interrupted", 1);
       }
     }
@@ -124,21 +125,18 @@ int filelock__lock_wait(filelock__handle_t *handle, int exclusive) {
   return 0;
 }
 
-int filelock__lock_timeout(filelock__handle_t *handle,
-			   int exclusive, int timeout,
-			   int *locked) {
+int filelock__lock_timeout(HANDLE file, int exclusive, int timeout, int *locked) {
 
   DWORD dwFlags = exclusive ? LOCKFILE_EXCLUSIVE_LOCK : 0;
   BOOL res;
   int timeleft = timeout;
-  HANDLE *file = &handle->file;
   OVERLAPPED ov = { 0 };
 
   /* This is the default, a timeout */
   *locked = 0;
 
   ov.hEvent = CreateEvent(NULL, 0, 0, NULL);
-  res = LockFileEx(*file, dwFlags, 0, 1, 0, &ov);
+  res = LockFileEx(file, dwFlags, 0, 1, 0, &ov);
 
   if (!res) {
     DWORD err = GetLastError();
@@ -157,39 +155,59 @@ int filelock__lock_timeout(filelock__handle_t *handle,
 	*locked = 1;
 	break;
       } else {
-	CancelIo(*file);
+	CancelIo(file);
 	CloseHandle(ov.hEvent);
 	filelock__error("Locking file (timeout): ", GetLastError());
       }
 
       /* Check for interrupt and try again */
       if (filelock__is_interrupt_pending()) {
-	CancelIo(*file);
+	CancelIo(file);
 	CloseHandle(ov.hEvent);
-	filelock__destroy_handle(handle);
+	UnlockFileEx(file, 0, 1, 0, &ov); /* ignore errors */
+	CloseHandle(file);		  /* ignore errors */
 	error("Locking interrupted");
       }
       timeleft -= FILELOCK_INTERRUPT_INTERVAL;
     }
   }
 
-  CancelIo(*file);
+  CancelIo(file);
   CloseHandle(ov.hEvent);
   return 0;
+}
+
+SEXP filelock__make_lock_handle(const char *c_path, HANDLE file) {
+  SEXP ptr, result;
+
+  filelock__handle_t *handle = malloc(sizeof(filelock__handle_t));
+  if (!handle) error("Cannot allocate memory for file locking");
+  handle->file = file;
+
+  ptr = PROTECT(R_MakeExternalPtr(handle, R_NilValue, R_NilValue));
+  R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
+
+  result = PROTECT(allocVector(VECSXP, 2));
+  SET_VECTOR_ELT(result, 0, ptr);
+  SET_VECTOR_ELT(result, 1, mkString(c_path));
+
+  UNPROTECT(2);
+  return result;
 }
 
 SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   const char *c_path = CHAR(STRING_ELT(path, 0));
   int c_exclusive = LOGICAL(exclusive)[0];
   int c_timeout = INTEGER(timeout)[0];
-  SEXP ptr, result;
+  SEXP result;
   int ret, locked = 1;		/* assume the best :) */
-  filelock__handle_t *handle;
+  HANDLE file;
 
-  handle = malloc(sizeof(filelock__handle_t));
-  if (!handle) error("Cannot allocate memory for file locking");
+  /* Check if this file was already locked. */
+  filelock__list_t *node = filelock__list_find(c_path);
+  if (node) return filelock__make_lock_handle(c_path, node->file);
 
-  handle->file = CreateFile(
+  file = CreateFile(
     /* lpFilename = */            c_path,
     /* dwDesiredAccess = */       GENERIC_READ | GENERIC_WRITE,
     /* dwShareMode = */           FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -198,31 +216,26 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
     /* dwFlagsAndAttributes = */  FILE_FLAG_OVERLAPPED,
     /* hTemplateFile = */         NULL);
 
-  if (handle->file == INVALID_HANDLE_VALUE) {
+  if (file == INVALID_HANDLE_VALUE) {
     filelock__error("Opening file: ", GetLastError());
   }
 
-  /* We create the result object here, so that the finalizer
+  /* We create the result object up front, so that the finalizer
      will close the file handle on error or interrupt. */
 
-  ptr = PROTECT(R_MakeExternalPtr(handle, R_NilValue, R_NilValue));
-  R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
-
-  result = PROTECT(allocVector(VECSXP, 2));
-  SET_VECTOR_ELT(result, 0, ptr);
-  SET_VECTOR_ELT(result, 1, path);
+  result = PROTECT(filelock__make_lock_handle(c_path, file));
 
   /* Give it a try, fail immediately */
   if (c_timeout == 0) {
-    ret = filelock__lock_now(handle, c_exclusive, &locked);
+    ret = filelock__lock_now(file, c_exclusive, &locked);
 
   /* Wait indefintely */
   } else if (c_timeout == -1) {
-    ret = filelock__lock_wait(handle, c_exclusive);
+    ret = filelock__lock_wait(file, c_exclusive);
 
   /* Finite timeout */
   } else {
-    ret = filelock__lock_timeout(handle, c_exclusive,
+    ret = filelock__lock_timeout(file, c_exclusive,
 				 c_timeout, &locked);
   }
 
@@ -231,22 +244,38 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   }
 
   if (!locked) {
-    UNPROTECT(2);
+    UNPROTECT(1);
     return R_NilValue;
   }
 
-  UNPROTECT(2);
+  if (filelock__list_add(c_path, file)) error("Not enough memory");
+
+  UNPROTECT(1);
   return result;
 }
 
 SEXP filelock_unlock(SEXP lock) {
-  filelock__handle_t *handle = (HANDLE) R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
-  filelock__destroy_handle(handle);
-  R_ClearExternalPtr(VECTOR_ELT(lock, 0));
+  filelock__handle_t *handle = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
+  OVERLAPPED ov = { 0 };
+
+  if (handle) {
+    const char *c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
+    UnlockFileEx(handle->file, 0, 1, 0, &ov); /* ignore errors */
+    CloseHandle(handle->file);		      /* ignore errors */
+    filelock__list_remove(c_path);
+    R_ClearExternalPtr(VECTOR_ELT(lock, 0));
+  }
+
   return ScalarLogical(1);
 }
 
 SEXP filelock_is_unlocked(SEXP lock) {
   void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
-  return ScalarLogical(! ptr);
+  if (ptr) {
+    const char *c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
+    int inlist = filelock__list_find(c_path) != 0;
+    return ScalarLogical(! inlist);
+  } else {
+    return ScalarLogical(1);
+  }
 }
