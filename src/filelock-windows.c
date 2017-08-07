@@ -65,10 +65,8 @@ int filelock__lock_now(HANDLE file, int exclusive, int *locked) {
   DWORD dwFlags = LOCKFILE_FAIL_IMMEDIATELY;
   OVERLAPPED ov = { 0 };
   if (exclusive) dwFlags |= LOCKFILE_EXCLUSIVE_LOCK;
-  REprintf("locking now\n");
   if (! LockFileEx(file, dwFlags, 0, 1, 0, &ov)) {
     DWORD error = GetLastError();
-    REprintf("no: %d\n", error);
     *locked = 0;
     if (error == ERROR_LOCK_VIOLATION) {
       return 0;
@@ -76,7 +74,6 @@ int filelock__lock_now(HANDLE file, int exclusive, int *locked) {
       return error;
     }
   } else {
-    REprintf("yes!\n");
     *locked = 1;
     return 0;
   }
@@ -97,10 +94,8 @@ int filelock__lock_wait(HANDLE file, int exclusive) {
       if (err != ERROR_IO_PENDING) filelock__error("Locking file: ", err);
 
       wres = WaitForSingleObject(ov.hEvent, FILELOCK_INTERRUPT_INTERVAL);
-      REprintf("wait: %d\n", wres);
       if (wres == WAIT_TIMEOUT) {
 	/* we'll try again */
-	REprintf("try again");
       } else if (wres == WAIT_OBJECT_0) {
 	CloseHandle(ov.hEvent);
 	return 0;
