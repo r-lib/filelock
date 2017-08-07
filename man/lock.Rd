@@ -12,7 +12,8 @@ unlock(lock)
 }
 \arguments{
 \item{path}{Path to the file to lock. If the file does not exist, it
-will be created. \emph{Do not place the lock on a file that you want to
+will be created, but the directory of the file must exist.
+\emph{Do not place the lock on a file that you want to
 read from or write to!} *Always use a special lock file. See details
 below.}
 
