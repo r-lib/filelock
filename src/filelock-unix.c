@@ -145,8 +145,8 @@ SEXP filelock_unlock(SEXP lock) {
   if (node) {
     node->refcount -= 1;
     if (!node->refcount) {
-      filelock__list_remove(c_path);
       close(node->file);
+      filelock__list_remove(c_path);
     }
   }
 
