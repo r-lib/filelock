@@ -13,18 +13,18 @@
 
 #define FILELOCK_INTERRUPT_INTERVAL 200
 
-static int filelock_dummy_object = 0;
-
 struct sigaction filelock_old_sa;
 
 void filelock__finalizer(SEXP x) {
-  void *ptr = R_ExternalPtrAddr(x);
-  SEXP des;
+  filelock__list_t *ptr = (filelock__list_t*) R_ExternalPtrAddr(x);
 
   if (!ptr) return;
 
-  des = R_ExternalPtrTag(x);
-  close(INTEGER(des)[0]);
+  ptr->refcount -= 1;
+  if (!ptr->refcount) {
+    close(ptr->file);
+    filelock__list_remove(ptr->path);
+  }
 
   R_ClearExternalPtr(x);
 }
@@ -80,32 +80,25 @@ int filelock__interruptible(int filedes, struct flock *lck,
   return ret;
 }
 
-SEXP filelock__make_lock_handle(const char *c_path, int filedes) {
-  SEXP ptr, result;
-
-  ptr = PROTECT(R_MakeExternalPtr(&filelock_dummy_object,
-				  ScalarInteger(filedes), R_NilValue));
-  R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
-
-  result = PROTECT(allocVector(VECSXP, 2));
-  SET_VECTOR_ELT(result, 0, ptr);
-  SET_VECTOR_ELT(result, 1, mkString(c_path));
-
-  UNPROTECT(2);
-  return result;
-}
-
 SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   struct flock lck;
   const char *c_path = CHAR(STRING_ELT(path, 0));
   int c_exclusive = LOGICAL(exclusive)[0];
   int c_timeout = INTEGER(timeout)[0];
   int filedes, ret;
-  SEXP result;
 
   /* Check if this file was already locked. */
   filelock__list_t *node = filelock__list_find(c_path);
-  if (node) return filelock__make_lock_handle(c_path, node->file);
+  if (node) {
+    if ((c_exclusive && node->exclusive) ||
+	(!c_exclusive && !node->exclusive)) {
+      return filelock__make_lock_handle(node);
+    } else if (c_exclusive) {
+      error("File already has a shared lock");
+    } else {
+      error("File already has an exclusive lock");
+    }
+  }
 
   lck.l_type = c_exclusive ? F_WRLCK : F_RDLCK;
   lck.l_whence = SEEK_SET;
@@ -115,17 +108,11 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   filedes = open(c_path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
   if (filedes == -1) error("Cannot open lock file: %s", strerror(errno));
 
-  /* We create the retult object here, so that the finalizer
-     will close the file descriptor on error or interrupt. */
-
-  result = PROTECT(filelock__make_lock_handle(c_path, filedes));
-
   /* One shot only? Do not block if cannot lock */
   if (c_timeout == 0) {
     ret = fcntl(filedes, F_SETLK, &lck);
     if (ret == -1) {
       if (errno == EAGAIN || errno == EACCES) {
-	UNPROTECT(1);
 	return R_NilValue;
       }
       error("Cannot lock file: '%s': %s", c_path, strerror(errno));
@@ -136,28 +123,34 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
 				  c_timeout);
   }
 
-  /* Failed to acquire the lock */
+  /* Failed to acquire the lock? */
   if (ret) {
-    UNPROTECT(1);
     return R_NilValue;
+  } else {
+    return filelock__list_add(c_path, filedes, c_exclusive);
   }
-
-  if (filelock__list_add(c_path, filedes)) error("Not enough memory");
-
-  UNPROTECT(1);
-  return result;
 }
 
 SEXP filelock_unlock(SEXP lock) {
   void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
+  const char *c_path;
+  filelock__list_t *node;
 
-  if (ptr) {
-    SEXP des = R_ExternalPtrTag(VECTOR_ELT(lock, 0));
-    const char *c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
-    filelock__list_remove(c_path);
-    close(INTEGER(des)[0]);
-    R_ClearExternalPtr(VECTOR_ELT(lock, 0));
+  if (!ptr) return ScalarLogical(1);
+
+  c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
+  node = filelock__list_find(c_path);
+
+  /* It has to be there.... */
+  if (node) {
+    node->refcount -= 1;
+    if (!node->refcount) {
+      close(node->file);
+      filelock__list_remove(c_path);
+    }
   }
+
+  R_ClearExternalPtr(VECTOR_ELT(lock, 0));
 
   return ScalarLogical(1);
 }

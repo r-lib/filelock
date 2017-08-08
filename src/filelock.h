@@ -16,6 +16,8 @@ SEXP filelock_is_unlocked(SEXP lock);
 
 typedef struct filelock__list_s {
   char *path;
+  int refcount;
+  int exclusive;
 #ifdef _WIN32
   HANDLE file;
 #else
@@ -26,10 +28,12 @@ typedef struct filelock__list_s {
 
 
 #ifdef _WIN32
-int filelock__list_add(const char *path, HANDLE file);
+SEXP filelock__list_add(const char *path, HANDLE file, int exclusive);
 #else
-int filelock__list_add(const char *path, int file);
+SEXP filelock__list_add(const char *path, int file, int exclusive);
 #endif
 
+SEXP filelock__make_lock_handle(filelock__list_t *node);
 void filelock__list_remove(const char *path);
 filelock__list_t *filelock__list_find(const char *path);
+void filelock__finalizer(SEXP x);
