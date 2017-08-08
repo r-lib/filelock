@@ -170,22 +170,15 @@ test_that("wait forever", {
   )
   px2 <- callr::r_process$new(px2_opts)
 
+  px1$kill()
   px2$wait(timeout = 2000)
-  if (px2$is_alive()) {
-    px1$kill()
-    px2$kill()
-
-    ## Killed process has exit status 1 on windows
-    if (.Platform$OS.type == "windows") {
-      expect_true(px2$get_exit_status() == 1)
-    } else {
-      expect_true(px2$get_exit_status() < 0)
-    }
+  if (!px2$is_alive()) {
+     expect_true(px2$get_exit_status() == 0)
   } else {
-    px1$kill()
     px2$kill()
-    stop("Process already done, something is wrong")
+    stop("psx2 still running, something is wrong")
   }
+
 })
 
 test_that("wait forever, lock released", {
