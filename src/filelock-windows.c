@@ -8,10 +8,6 @@
 
 #define FILELOCK_INTERRUPT_INTERVAL 200
 
-typedef struct {
-  HANDLE file;
-} filelock__handle_t;
-
 void filelock__check_interrupt_fn(void *dummy) {
   R_CheckUserInterrupt();
 }
@@ -41,23 +37,20 @@ void filelock__error(const char *str, DWORD errorcode) {
   error("Filelock error, %s %s", str, msg);
 }
 
-void filelock__destroy_handle(filelock__handle_t *handle) {
-  HANDLE *file;
-  OVERLAPPED ov = { 0 };
-
-  if (!handle) return;
-
-  file = &handle->file;
-
-  UnlockFileEx(*file, 0, 1, 0, &ov); /* ignore errors */
-  CloseHandle(*file);		     /* ignore errors */
-
-  free(handle);
-}
-
 void filelock__finalizer(SEXP x) {
-  filelock__handle_t *handle = (filelock__handle_t*) R_ExternalPtrAddr(x);
-  filelock__destroy_handle(handle);
+  filelock__list_t *ptr = (filelock__list_t*) R_ExternalPtrAddr(x);
+
+  if (!ptr) return;
+
+  ptr->refcount -= 1;
+  if (!ptr->refcount) {
+    HANDLE *file = &ptr->file;
+    OVERLAPPED ov = { 0 };
+    UnlockFileEx(*file, 0, 1, 0, &ov); /* ignore errors */
+    CloseHandle(*file);		       /* ignore errors */
+    filelock__list_remove(ptr->path);
+  }
+
   R_ClearExternalPtr(x);
 }
 
@@ -172,35 +165,25 @@ int filelock__lock_timeout(HANDLE file, int exclusive, int timeout, int *locked)
   return 0;
 }
 
-SEXP filelock__make_lock_handle(const char *c_path, HANDLE file) {
-  SEXP ptr, result;
-
-  filelock__handle_t *handle = malloc(sizeof(filelock__handle_t));
-  if (!handle) error("Cannot allocate memory for file locking");
-  handle->file = file;
-
-  ptr = PROTECT(R_MakeExternalPtr(handle, R_NilValue, R_NilValue));
-  R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
-
-  result = PROTECT(allocVector(VECSXP, 2));
-  SET_VECTOR_ELT(result, 0, ptr);
-  SET_VECTOR_ELT(result, 1, mkString(c_path));
-
-  UNPROTECT(2);
-  return result;
-}
-
 SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   const char *c_path = CHAR(STRING_ELT(path, 0));
   int c_exclusive = LOGICAL(exclusive)[0];
   int c_timeout = INTEGER(timeout)[0];
-  SEXP result;
   int ret, locked = 1;		/* assume the best :) */
   HANDLE file;
 
   /* Check if this file was already locked. */
   filelock__list_t *node = filelock__list_find(c_path);
-  if (node) return filelock__make_lock_handle(c_path, node->file);
+  if (node) {
+    if ((c_exclusive && node->exclusive) ||
+	(!c_exclusive && !node->exclusive)) {
+      return filelock__make_lock_handle(node);
+    } else if (c_exclusive) {
+      error("File already has a shared lock");
+    } else {
+      error("File already has an exclusive lock");
+    }
+  }
 
   file = CreateFile(
     /* lpFilename = */            c_path,
@@ -214,11 +197,6 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   if (file == INVALID_HANDLE_VALUE) {
     filelock__error("Opening file: ", GetLastError());
   }
-
-  /* We create the result object up front, so that the finalizer
-     will close the file handle on error or interrupt. */
-
-  result = PROTECT(filelock__make_lock_handle(c_path, file));
 
   /* Give it a try, fail immediately */
   if (c_timeout == 0) {
@@ -239,27 +217,35 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   }
 
   if (!locked) {
-    UNPROTECT(1);
     return R_NilValue;
+  } else {
+    return filelock__list_add(c_path, file, c_exclusive);
   }
-
-  if (filelock__list_add(c_path, file)) error("Not enough memory");
-
-  UNPROTECT(1);
-  return result;
 }
 
 SEXP filelock_unlock(SEXP lock) {
-  filelock__handle_t *handle = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
-  OVERLAPPED ov = { 0 };
+  void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
+  const char *c_path;
+  filelock__list_t *node;
 
-  if (handle) {
-    const char *c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
-    UnlockFileEx(handle->file, 0, 1, 0, &ov); /* ignore errors */
-    CloseHandle(handle->file);		      /* ignore errors */
-    filelock__list_remove(c_path);
-    R_ClearExternalPtr(VECTOR_ELT(lock, 0));
+  if (!ptr) return ScalarLogical(1);
+
+  c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
+  node = filelock__list_find(c_path);
+
+  /* It has to be there.... */
+  if (node) {
+    node->refcount -= 1;
+    if (!node->refcount) {
+      const char *c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
+      OVERLAPPED ov = { 0 };
+      UnlockFileEx(node->file, 0, 1, 0, &ov); /* ignore errors */
+      CloseHandle(node->file);		      /* ignore errors */
+      filelock__list_remove(c_path);
+    }
   }
+
+  R_ClearExternalPtr(VECTOR_ELT(lock, 0));
 
   return ScalarLogical(1);
 }
