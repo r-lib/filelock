@@ -236,15 +236,27 @@ test_that("locking the same file twice", {
   expect_equal(lck, lck2)
 })
 
-test_that("locking is idempotent", {
+test_that("lock reference counting", {
   tmp <- tempfile()
 
+  ## Two locks of the same kind
   expect_silent({
     lck <- lock(tmp, exclusive = TRUE)
     lck2 <- lock(tmp, exclusive = TRUE)
     unlock(lck)
   })
 
+  ## File is still locked
+  res <- callr::r_safe(
+    function(path) filelock::lock(path, timeout = 0),
+    list(path = tmp),
+    timeout = 1,
+    spinner = FALSE
+  )
+  expect_null(res)
+
+  ## Now it is unlocked
+  unlock(lck2)
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 0),
     list(path = tmp),
@@ -253,22 +265,24 @@ test_that("locking is idempotent", {
   )
   expect_equal(class(res), "filelock_lock")
 
+  ## Relock
   expect_silent({
     lck3 <- lock(tmp, exclusive = TRUE)
   })
 
+  ## Now it is locked again
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 0),
     list(path = tmp),
     timeout = 1,
     spinner = FALSE
   )
-
   expect_null(res)
+
   unlock(lck3)
 })
 
-test_that("unlock applies to other handle as well", {
+test_that("Multiple locks", {
 
   tmp <- tempfile()
   lck <- lock(tmp, exclusive = TRUE)
@@ -276,5 +290,36 @@ test_that("unlock applies to other handle as well", {
   unlock(lck)
 
   expect_output(print(lck), "Unlocked lock")
-  expect_output(print(lck2), "Unlocked lock")
+  expect_output(print(lck2), "^Lock")
+})
+
+test_that("Relocking does not affect unlocked locks", {
+  tmp <- tempfile()
+
+
+  lck <- lock(tmp, exclusive = TRUE)
+  lck2 <- lock(tmp, exclusive = TRUE)
+  unlock(lck)
+
+  ## Relock
+  lck3 <- lock(tmp, exclusive = TRUE)
+
+  expect_output(print(lck), "Unlocked lock")
+  expect_output(print(lck2), "^Lock")
+  expect_output(print(lck3), "^Lock")
+
+  unlock(lck2)
+  unlock(lck3)
+})
+
+test_that("Multiple, incompatible lock types", {
+
+  tmp <- tempfile()
+  lck <- lock(tmp, exclusive = TRUE)
+  expect_error(lock(tmp, exclusive = FALSE))
+  unlock(lck)
+
+  lck <- lock(tmp, exclusive = FALSE)
+  expect_error(lock(tmp, exclusive = TRUE))
+  unlock(lck)
 })
