@@ -316,3 +316,24 @@ test_that("Multiple, incompatible lock types", {
   expect_error(lock(tmp, exclusive = TRUE))
   unlock(lck)
 })
+
+test_that("UTF-8 filenames", {
+
+  tmp <- paste(tempfile(), "-\u00fc.lock")
+
+  ## We need to test it the file system supports UTF-8/Unicode file names
+  good <- tryCatch(
+    {
+      cat("hello\n", file = tmp)
+      if (readLines(tmp) != "hello") stop("Not good")
+      unlink(tmp)
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+  if (identical(good, FALSE)) skip("FS does not support Unicode file names")
+
+  expect_silent(l <- lock(tmp))
+  expect_equal(Encoding(l[[2]]), "UTF-8")
+  expect_silent(unlock(l))
+})
