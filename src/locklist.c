@@ -8,15 +8,17 @@ filelock__list_t lock_list_head = { 0, 0 };
 filelock__list_t *lock_list = &lock_list_head;
 
 SEXP filelock__make_lock_handle(filelock__list_t *node) {
-  SEXP ptr, result;
+  SEXP ptr, result, path;
   ptr = PROTECT(R_MakeExternalPtr(node, R_NilValue, R_NilValue));
   R_RegisterCFinalizerEx(ptr, filelock__finalizer, 0);
 
+  path = PROTECT(allocVector(STRSXP, 1));
+  SET_STRING_ELT(path, 0, mkCharCE(node->path, CE_UTF8));
   result = PROTECT(allocVector(VECSXP, 2));
   SET_VECTOR_ELT(result, 0, ptr);
-  SET_VECTOR_ELT(result, 1, mkString(node->path));
+  SET_VECTOR_ELT(result, 1, path);
 
-  UNPROTECT(2);
+  UNPROTECT(3);
   node->refcount += 1;
 
   return result;

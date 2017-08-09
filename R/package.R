@@ -160,7 +160,7 @@ lock <- function(path, exclusive = TRUE, timeout = Inf) {
   }
   path <- file.path(ndn, basename(path))
 
-  res <- .Call(c_filelock_lock, path, exclusive, as.integer(timeout))
+  res <- .Call(c_filelock_lock, enc2utf8(path), exclusive, as.integer(timeout))
 
   if (is.null(res)) res else structure(res, class = "filelock_lock")
 }

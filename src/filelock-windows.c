@@ -8,6 +8,8 @@
 
 #define FILELOCK_INTERRUPT_INTERVAL 200
 
+int filelock__utf8_to_utf16_alloc(const char* s, WCHAR** ws_ptr);
+
 void filelock__check_interrupt_fn(void *dummy) {
   R_CheckUserInterrupt();
 }
@@ -34,7 +36,7 @@ void filelock__error(const char *str, DWORD errorcode) {
   strcpy(msg, lpMsgBuf);
   LocalFree(lpMsgBuf);
 
-  error("Filelock error, %s %s", str, msg);
+  error("Filelock error (%d), %s %s", (int) errorcode, str, msg);
 }
 
 void filelock__finalizer(SEXP x) {
@@ -171,6 +173,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   int c_timeout = INTEGER(timeout)[0];
   int ret, locked = 1;		/* assume the best :) */
   HANDLE file;
+  WCHAR *wpath;
 
   /* Check if this file was already locked. */
   filelock__list_t *node = filelock__list_find(c_path);
@@ -185,8 +188,10 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
     }
   }
 
-  file = CreateFile(
-    /* lpFilename = */            c_path,
+  filelock__utf8_to_utf16_alloc(c_path, &wpath);
+
+  file = CreateFileW(
+    /* lpFilename = */            wpath,
     /* dwDesiredAccess = */       GENERIC_READ | GENERIC_WRITE,
     /* dwShareMode = */           FILE_SHARE_READ | FILE_SHARE_WRITE,
     /* lpSecurityAttributes = */  NULL,
