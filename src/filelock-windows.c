@@ -160,6 +160,8 @@ int filelock__lock_timeout(HANDLE file, int exclusive, int timeout, int *locked)
       }
       timeleft -= FILELOCK_INTERRUPT_INTERVAL;
     }
+  } else {
+    *locked = 1;
   }
 
   CancelIo(file);

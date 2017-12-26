@@ -337,3 +337,11 @@ test_that("UTF-8 filenames", {
   expect_equal(Encoding(l[[2]]), "UTF-8")
   expect_silent(unlock(l))
 })
+
+## This used to fail on Windows
+test_that("non-exclusive lock with timeout", {
+  lockfile <- tempfile()
+  l <- lock(lockfile, exclusive = FALSE, timeout = 1000)
+  expect_s3_class(l, "filelock_lock")
+  expect_true(unlock(l))
+})
