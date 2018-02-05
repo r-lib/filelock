@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "filelock.h"
 
