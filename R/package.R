@@ -122,27 +122,28 @@
 #'
 #'   `unlock` returns `TRUE`, always.
 #'
-#' @export
-#' @aliases filelock
-#' @useDynLib filelock, .registration = TRUE, .fixes = "c_"
-#' @examples
-#' \dontrun{
+#' @section Examples:
+#' ```
 #' ## -------------------------------------------------------------
 #' ## R process 1 gets an exclusive lock
 #' ## Warning: if you want to lock file 'myfile', always create a
 #' ## separate lock file instead of placing the lock on this file directly!
-#' lck <- lock("/tmp/myfile.lck")
+#' lck <- lock(mylockfile)
 #'
 #' ## -------------------------------------------------------------
 #' ## R process 2 fails to acquire a lock
-#' lock("/tmp/myfile.lck", timeout = 0)
+#' lock(mylockfile, timeout = 0)
 #'
 #' ## Let's wait for 5 seconds, before giving up
-#' lock("/tmp/myfile.lck", timeout = 5000)
+#' lock(mylockfile, timeout = 5000)
 #'
 #' ## Wait indefinetely
-#' lock("/tmp/myfile.lck", timeout = Inf)
-#' }
+#' lock(mylockfile, timeout = Inf)
+#' ```
+#'
+#' @export
+#' @aliases filelock
+#' @useDynLib filelock, .registration = TRUE, .fixes = "c_"
 
 lock <- function(path, exclusive = TRUE, timeout = Inf) {
 
