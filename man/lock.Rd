@@ -46,7 +46,7 @@ There are two kinds of locks, \emph{exclusive} and \emph{shared}, see the
 }
 \section{Warning}{
 
-Always use special files for locking. I.e. if you want to restict access
+Always use special files for locking. I.e. if you want to restrict access
 to a certain file, do \emph{not} place the lock on this file. Create a special
 file, e.g. by appending \code{.lock} to the original file name and place the
 lock on that. (The \code{lock()} function creates the file for you, actually,
@@ -64,7 +64,7 @@ OSes you cannot write to it (or read from it), once the lock is in place.
 \section{Advisory Locks}{
 
 All locks set by this package might be advisory. A process that does not
-respect this locking machanism may be able to read and write the locked
+respect this locking mechanism may be able to read and write the locked
 file, or even remove it (assuming it has capabilities to do so).
 }
 
@@ -96,7 +96,7 @@ currently.
 
 \section{Locking Part of a File}{
 
-While this is possible in general, \code{filelock} does not suport it
+While this is possible in general, \code{filelock} does not support it
 currently. The main purpose of \code{filelock} is to lock using special
 lock files, and locking part of these is not really useful.
 }
@@ -105,7 +105,7 @@ lock files, and locking part of these is not really useful.
 
 On Unix (i.e. Linux, macOS, etc.), we use \code{fcntl} to acquire and
 release the locks. You can read more about it here:
-https://www.gnu.org/software/libc/manual/html_node/File-Locks.html
+\url{https://www.gnu.org/software/libc/manual/html_node/File-Locks.html}
 
 Some important points:
 \itemize{
@@ -139,7 +139,7 @@ On Windows, \code{LockFileEx} is used to create the lock on the file.
 If a finite timeout is specified for the lock request, asynchronous
 (overlapped) I/O is used to wait for the locking event with a timeout.
 See more about \code{LockFileEx} here:
-https://msdn.microsoft.com/en-us/library/aa365203.aspx
+\url{https://msdn.microsoft.com/en-us/library/aa365203.aspx}
 
 Some important points:
 \itemize{

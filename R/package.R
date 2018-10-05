@@ -5,7 +5,7 @@
 #' `exclusive` argument and other details below.
 #'
 #' @section Warning:
-#' Always use special files for locking. I.e. if you want to restict access
+#' Always use special files for locking. I.e. if you want to restrict access
 #' to a certain file, do *not* place the lock on this file. Create a special
 #' file, e.g. by appending `.lock` to the original file name and place the
 #' lock on that. (The `lock()` function creates the file for you, actually,
@@ -21,7 +21,7 @@
 #'
 #' @section Advisory Locks:
 #' All locks set by this package might be advisory. A process that does not
-#' respect this locking machanism may be able to read and write the locked
+#' respect this locking mechanism may be able to read and write the locked
 #' file, or even remove it (assuming it has capabilities to do so).
 #'
 #' @section Unlock on Termination:
@@ -47,14 +47,14 @@
 #' currently.
 #'
 #' @section Locking Part of a File:
-#' While this is possible in general, `filelock` does not suport it
+#' While this is possible in general, `filelock` does not support it
 #' currently. The main purpose of `filelock` is to lock using special
 #' lock files, and locking part of these is not really useful.
 #'
 #' @section Internals on Unix:
 #' On Unix (i.e. Linux, macOS, etc.), we use `fcntl` to acquire and
 #' release the locks. You can read more about it here:
-#' https://www.gnu.org/software/libc/manual/html_node/File-Locks.html
+#' <https://www.gnu.org/software/libc/manual/html_node/File-Locks.html>
 #'
 #' Some important points:
 #' * The lock is put on a file descriptor, which is kept open, until the
@@ -84,7 +84,7 @@
 #' If a finite timeout is specified for the lock request, asynchronous
 #' (overlapped) I/O is used to wait for the locking event with a timeout.
 #' See more about `LockFileEx` here:
-#' https://msdn.microsoft.com/en-us/library/aa365203.aspx
+#' <https://msdn.microsoft.com/en-us/library/aa365203.aspx>
 #'
 #' Some important points:
 #' * `LockFileEx` locks are mandatory (as opposed to advisory), so indeed
