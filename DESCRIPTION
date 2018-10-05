@@ -1,6 +1,6 @@
 Package: filelock
 Title: Portable File Locking
-Version: 1.0.1
+Version: 1.0.1.9000
 Author: Gábor Csárdi
 Maintainer: Gábor Csárdi <csardi.gabor@gmail.com>
 Description: Place an exclusive or shared lock on a file. It uses 'LockFile'

@@ -66,6 +66,14 @@ int filelock__interruptible(int filedes, struct flock *lck,
     setitimer(ITIMER_REAL, &timer, 0);
     ret = fcntl(filedes, F_SETLKW, lck);
 
+    /* We need to remove the timer here, to avoid getting a signal
+       later. A later signal may kill the R process. */
+    timer.it_value.tv_sec = 0;
+    timer.it_value.tv_usec = 0;
+    timer.it_interval.tv_sec = 0;
+    timer.it_interval.tv_usec = 0;
+    setitimer(ITIMER_REAL, &timer, 0);
+
     /* If ret != -1, then we have the lock, return.
        If -1, but not EINTR, then a real error happened. */
     if (ret != -1) { ret = 0; break; }
