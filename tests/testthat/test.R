@@ -223,10 +223,11 @@ test_that("locking the same file twice", {
     lck2 <- lock(tmp, exclusive = TRUE)
   })
 
-  expect_equal(lck, lck2)
+  expect_identical(lck, lck2)
 
   unlock(lck)
-  expect_equal(lck, lck2)
+  unlock(lck2)
+  expect_identical(lck, lck2)
 })
 
 test_that("lock reference counting", {
