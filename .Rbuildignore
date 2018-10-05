@@ -7,3 +7,4 @@
 ^src/filelock\.so$
 ^src/filelock\.so\.dSYM$
 ^src/.*\.o$
+^revdep$

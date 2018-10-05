@@ -4,3 +4,4 @@
 /src/filelock.so
 /src/filelock.dll
 /src/*.o
+/revdep
