@@ -27,7 +27,7 @@ test_that("an exclusive lock really locks", {
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 0),
     list(path = tmp),
-    timeout = 1,
+    timeout = 3,
     spinner = FALSE
   )
 
@@ -43,7 +43,7 @@ test_that("can release a lock", {
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 0),
     list(path = tmp),
-    timeout = 1,
+    timeout = 3,
     spinner = FALSE
   )
 
@@ -53,7 +53,7 @@ test_that("can release a lock", {
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 0),
     list(path = tmp),
-    timeout = 1,
+    timeout = 3,
     spinner = FALSE
   )
 
@@ -87,7 +87,7 @@ test_that("finalizer works", {
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 0),
     list(path = tmp),
-    timeout = 1,
+    timeout = 3,
     spinner = FALSE
   )
 
@@ -104,7 +104,7 @@ test_that("timeout", {
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 1000),
     list(path = tmp),
-    timeout = 2,
+    timeout = 3,
     spinner = FALSE
   )
 
@@ -244,7 +244,7 @@ test_that("lock reference counting", {
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 0),
     list(path = tmp),
-    timeout = 1,
+    timeout = 3,
     spinner = FALSE
   )
   expect_null(res)
@@ -254,7 +254,7 @@ test_that("lock reference counting", {
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 0),
     list(path = tmp),
-    timeout = 1,
+    timeout = 3,
     spinner = FALSE
   )
   expect_equal(class(res), "filelock_lock")
@@ -268,7 +268,7 @@ test_that("lock reference counting", {
   res <- callr::r_safe(
     function(path) filelock::lock(path, timeout = 0),
     list(path = tmp),
-    timeout = 1,
+    timeout = 3,
     spinner = FALSE
   )
   expect_null(res)
