@@ -1,4 +1,6 @@
 
+# devel
+
 # 1.0.2
 
 * `lock()` now removes the timer on Unix, to avoid undefined behavior in
