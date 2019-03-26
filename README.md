@@ -16,9 +16,11 @@ and `fcntl` locks on Unix-like systems.
 
 ## Installation
 
+Install the package from CRAN as usual:
+
 
 ```r
-devtools::install_github("r-lib/filelock")
+install.packages("filelock")
 ```
 
 ## Usage
