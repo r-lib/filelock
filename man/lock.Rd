@@ -6,7 +6,7 @@
 \alias{unlock}
 \title{Advisory File Locking and Unlocking}
 \usage{
-lock(path, exclusive = TRUE, timeout = Inf)
+lock(path, exclusive = TRUE, timeout = Inf, delete_on_close = FALSE)
 
 unlock(lock)
 }
@@ -29,6 +29,10 @@ shared lock.}
 then the process will wait indefinitely to acquire the lock. If zero,
 then the function it returns immediately, with or without acquiring
 the lock}
+
+\item{delete_on_close}{Whether to delete the lock file after unlocking,
+once all handles are close to it, on Windows. It is ignored on
+non-Windows systems.}
 
 \item{lock}{The lock object to unlock. It is not an error to try to
 unlock an already unlocked lock. It is not possible to lock an

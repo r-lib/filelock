@@ -113,6 +113,9 @@
 #'   then the process will wait indefinitely to acquire the lock. If zero,
 #'   then the function it returns immediately, with or without acquiring
 #'   the lock
+#' @param delete_on_close Whether to delete the lock file after unlocking,
+#'   once all handles are close to it, on Windows. It is ignored on
+#'   non-Windows systems.
 #' @param lock The lock object to unlock. It is not an error to try to
 #'   unlock an already unlocked lock. It is not possible to lock an
 #'   unlocked lock again, a new lock has to be requested.
@@ -145,11 +148,13 @@
 #' @aliases filelock
 #' @useDynLib filelock, .registration = TRUE, .fixes = "c_"
 
-lock <- function(path, exclusive = TRUE, timeout = Inf) {
+lock <- function(path, exclusive = TRUE, timeout = Inf,
+                 delete_on_close = FALSE) {
 
   stopifnot(is_string(path))
   stopifnot(is_flag(exclusive))
   stopifnot(is_timeout(timeout))
+  stopifnot(is_flag(delete_on_close))
 
   ## Inf if encoded as -1 in our C code
   if (timeout == Inf) timeout <- -1L
@@ -161,7 +166,8 @@ lock <- function(path, exclusive = TRUE, timeout = Inf) {
   }
   path <- file.path(ndn, basename(path))
 
-  res <- .Call(c_filelock_lock, enc2utf8(path), exclusive, as.integer(timeout))
+  res <- .Call(c_filelock_lock, enc2utf8(path), exclusive, as.integer(timeout),
+               delete_on_close)
 
   if (is.null(res)) res else structure(res, class = "filelock_lock")
 }

@@ -7,7 +7,8 @@
 #include <windows.h>
 #endif
 
-SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout);
+SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout,
+		   SEXP delete_on_close);
 SEXP filelock_unlock(SEXP path);
 SEXP filelock_is_unlocked(SEXP lock);
 

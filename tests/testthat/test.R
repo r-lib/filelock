@@ -346,3 +346,23 @@ test_that("non-exclusive lock with timeout", {
   expect_s3_class(l, "filelock_lock")
   expect_true(unlock(l))
 })
+
+test_that("delete_on_close on Windows", {
+  if (.Platform$OS.type != "windows") return(expect_true(TRUE))
+  lockfile <- tempfile()
+  l <- lock(lockfile, delete_on_close = TRUE)
+  expect_true(file.exists(lockfile))
+  unlock(l)
+  expect_false(file.exists(lockfile))
+})
+
+test_that("delete_on_close on existing file, on Windows", {
+  if (.Platform$OS.type != "windows") return(expect_true(TRUE))
+  lockfile <- tempfile()
+  cat("something\n", file = lockfile)
+  expect_equal(readLines(lockfile), "something")
+  l <- lock(lockfile, delete_on_close = TRUE)
+  expect_true(file.exists(lockfile))
+  unlock(l)
+  expect_false(file.exists(lockfile))
+})

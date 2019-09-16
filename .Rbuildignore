@@ -8,3 +8,5 @@
 ^src/filelock\.so\.dSYM$
 ^src/.*\.o$
 ^revdep$
+^renv$
+^renv\.lock$

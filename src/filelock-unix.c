@@ -89,7 +89,8 @@ int filelock__interruptible(int filedes, struct flock *lck,
   return ret;
 }
 
-SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
+SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout,
+		   SEXP delete_on_close) {
   struct flock lck;
   const char *c_path = CHAR(STRING_ELT(path, 0));
   int c_exclusive = LOGICAL(exclusive)[0];
