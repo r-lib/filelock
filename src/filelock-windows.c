@@ -169,11 +169,11 @@ int filelock__lock_timeout(HANDLE file, int exclusive, int timeout, int *locked)
   return 0;
 }
 
-SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout, SEXP delete_on_close) {
+SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout, SEXP delete_on_unlock) {
   const char *c_path = CHAR(STRING_ELT(path, 0));
   int c_exclusive = LOGICAL(exclusive)[0];
   int c_timeout = INTEGER(timeout)[0];
-  int c_del_close = LOGICAL(delete_on_close)[0];
+  int c_del_unlock = LOGICAL(delete_on_unlock)[0];
   int ret, locked = 1;		/* assume the best :) */
   HANDLE file;
   WCHAR *wpath;
@@ -184,6 +184,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout, SEXP delete_on_close
   if (node) {
     if ((c_exclusive && node->exclusive) ||
 	(!c_exclusive && !node->exclusive)) {
+      node |= c_del_unlock;
       return filelock__make_lock_handle(node);
     } else if (c_exclusive) {
       error("File already has a shared lock");
@@ -195,7 +196,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout, SEXP delete_on_close
   filelock__utf8_to_utf16_alloc(c_path, &wpath);
 
   flags = FILE_FLAG_OVERLAPPED;
-  if (c_del_close) flags |= FILE_FLAG_DELETE_ON_CLOSE;
+  if (c_del_unlock) flags |= FILE_FLAG_DELETE_ON_CLOSE;
 
   file = CreateFileW(
     /* lpFilename = */            wpath,

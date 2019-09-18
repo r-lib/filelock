@@ -23,6 +23,7 @@ typedef struct filelock__list_s {
   HANDLE file;
 #else
   int file;
+  int delete;
 #endif
   struct filelock__list_s *next;
 } filelock__list_t;
@@ -31,7 +32,8 @@ typedef struct filelock__list_s {
 #ifdef _WIN32
 SEXP filelock__list_add(const char *path, HANDLE file, int exclusive);
 #else
-SEXP filelock__list_add(const char *path, int file, int exclusive);
+SEXP filelock__list_add(const char *path, int file, int exclusive,
+                        int delete);
 #endif
 
 SEXP filelock__make_lock_handle(filelock__list_t *node);

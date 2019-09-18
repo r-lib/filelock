@@ -18,16 +18,31 @@ struct sigaction filelock_old_sa;
 
 void filelock__finalizer(SEXP x) {
   filelock__list_t *ptr = (filelock__list_t*) R_ExternalPtrAddr(x);
+  int ret = 0, err = 0;
+  SEXP err_path;
 
   if (!ptr) return;
 
   ptr->refcount -= 1;
   if (!ptr->refcount) {
     close(ptr->file);
+    if (ptr->delete) {
+      ret = unlink(ptr->path);
+      if (ret) {
+        err = errno;
+        err_path = PROTECT(Rf_mkChar(ptr->path));
+      }
+    }
     filelock__list_remove(ptr->path);
   }
 
   R_ClearExternalPtr(x);
+
+  if (ret) {
+    error("Cannot delete lock file: '%s': %s", CHAR(err_path), strerror(err));
+    /* This is not called, but pleases static analyzers */
+    UNPROTECT(1);
+  }
 }
 
 void filelock__alarm_callback (int signum) {
@@ -90,11 +105,12 @@ int filelock__interruptible(int filedes, struct flock *lck,
 }
 
 SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout,
-		   SEXP delete_on_close) {
+		   SEXP delete_on_unlock) {
   struct flock lck;
   const char *c_path = CHAR(STRING_ELT(path, 0));
   int c_exclusive = LOGICAL(exclusive)[0];
   int c_timeout = INTEGER(timeout)[0];
+  int c_delete_on_unlock = LOGICAL(delete_on_unlock)[0];
   int filedes, ret;
 
   /* Check if this file was already locked. */
@@ -102,6 +118,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout,
   if (node) {
     if ((c_exclusive && node->exclusive) ||
 	(!c_exclusive && !node->exclusive)) {
+      node->delete |= c_delete_on_unlock;
       return filelock__make_lock_handle(node);
     } else if (c_exclusive) {
       error("File already has a shared lock");
@@ -137,31 +154,13 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout,
   if (ret) {
     return R_NilValue;
   } else {
-    return filelock__list_add(c_path, filedes, c_exclusive);
+    return filelock__list_add(c_path, filedes, c_exclusive,
+                              c_delete_on_unlock);
   }
 }
 
 SEXP filelock_unlock(SEXP lock) {
-  void *ptr = R_ExternalPtrAddr(VECTOR_ELT(lock, 0));
-  const char *c_path;
-  filelock__list_t *node;
-
-  if (!ptr) return ScalarLogical(1);
-
-  c_path = CHAR(STRING_ELT(VECTOR_ELT(lock, 1), 0));
-  node = filelock__list_find(c_path);
-
-  /* It has to be there.... */
-  if (node) {
-    node->refcount -= 1;
-    if (!node->refcount) {
-      close(node->file);
-      filelock__list_remove(c_path);
-    }
-  }
-
-  R_ClearExternalPtr(VECTOR_ELT(lock, 0));
-
+  filelock__finalizer(VECTOR_ELT(lock, 0));
   return ScalarLogical(1);
 }
 

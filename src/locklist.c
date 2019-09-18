@@ -28,13 +28,15 @@ SEXP filelock__make_lock_handle(filelock__list_t *node) {
 #ifdef _WIN32
 SEXP filelock__list_add(const char *path, HANDLE file, int exclusive) {
 #else
-SEXP filelock__list_add(const char *path, int file, int exclusive) {
+SEXP filelock__list_add(const char *path, int file, int exclusive,
+                        int delete) {
 #endif
   filelock__list_t *node;
   node = calloc(1, sizeof(filelock__list_t));
   if (!node) error("Out of memory");
   node->path = strdup(path);
   node->file = file;
+  node->delete = delete;
   node->exclusive = exclusive;
   node->refcount = 0;
   if (!node->path) { free(node); error("Out of memory"); }

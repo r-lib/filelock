@@ -100,7 +100,7 @@
 #' @param path Path to the file to lock. If the file does not exist, it
 #'   will be created, but the directory of the file must exist.
 #'   *Do not place the lock on a file that you want to
-#'   read from or write to!* *Always use a special lock file. See details
+#'   read from or write to!* Always use a special lock file. See details
 #'   below.
 #' @param exclusive Whether to acquire an exclusive lock. An exclusive
 #'   lock gives the process exclusive access to the file, no other
@@ -113,9 +113,22 @@
 #'   then the process will wait indefinitely to acquire the lock. If zero,
 #'   then the function it returns immediately, with or without acquiring
 #'   the lock
-#' @param delete_on_close Whether to delete the lock file after unlocking,
-#'   once all handles are close to it, on Windows. It is ignored on
-#'   non-Windows systems.
+#' @param delete_on_unlock Whether to delete the lock file after unlocking.
+#'   This option works slightly differently on Linux and Windows systems.
+#'   On Windows, we use the native `FILE_FLAG_DELETE_ON_CLOSE` flag to
+#'   open the file. This makes the OS delete the file, _once all of its
+#'   handles are closed_. If there are existing open handles to the file,
+#'   when `lock()` is called, then the locking fails unless they were all
+#'   opened with a `FILE_SHARE_DELETE` flag. On Windows, subsequent open
+#'   requests for the file fail.
+#'   On Unix, the file is deleted by the filelock package, in the finalizer
+#'   of the lock object. This means that file still be opened by the locking
+#'   or another process, and these new (and pre-existing) handles to it
+#'   will work, even after the deletion.
+#'   We suggest that you do not rely on these specifics when writing
+#'   portable code. You can be sure that the once the lock(s) made from
+#'   process calling `lock()` are unlocked, the file will be removed,
+#'   unless the R process crashes or freezes for some reason.
 #' @param lock The lock object to unlock. It is not an error to try to
 #'   unlock an already unlocked lock. It is not possible to lock an
 #'   unlocked lock again, a new lock has to be requested.
@@ -149,12 +162,12 @@
 #' @useDynLib filelock, .registration = TRUE, .fixes = "c_"
 
 lock <- function(path, exclusive = TRUE, timeout = Inf,
-                 delete_on_close = FALSE) {
+                 delete_on_unlock = FALSE) {
 
   stopifnot(is_string(path))
   stopifnot(is_flag(exclusive))
   stopifnot(is_timeout(timeout))
-  stopifnot(is_flag(delete_on_close))
+  stopifnot(is_flag(delete_on_unlock))
 
   ## Inf if encoded as -1 in our C code
   if (timeout == Inf) timeout <- -1L
@@ -167,7 +180,7 @@ lock <- function(path, exclusive = TRUE, timeout = Inf,
   path <- file.path(ndn, basename(path))
 
   res <- .Call(c_filelock_lock, enc2utf8(path), exclusive, as.integer(timeout),
-               delete_on_close)
+               delete_on_unlock)
 
   if (is.null(res)) res else structure(res, class = "filelock_lock")
 }

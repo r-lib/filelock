@@ -10,3 +10,5 @@
 ^revdep$
 ^renv$
 ^renv\.lock$
+^\.Rprofile$
+^r-packages$
