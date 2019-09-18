@@ -36,7 +36,9 @@ SEXP filelock__list_add(const char *path, int file, int exclusive,
   if (!node) error("Out of memory");
   node->path = strdup(path);
   node->file = file;
+#ifndef _WIN32
   node->delete = delete;
+#endif
   node->exclusive = exclusive;
   node->refcount = 0;
   if (!node->path) { free(node); error("Out of memory"); }

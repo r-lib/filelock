@@ -184,7 +184,6 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout, SEXP delete_on_unloc
   if (node) {
     if ((c_exclusive && node->exclusive) ||
 	(!c_exclusive && !node->exclusive)) {
-      node |= c_del_unlock;
       return filelock__make_lock_handle(node);
     } else if (c_exclusive) {
       error("File already has a shared lock");
