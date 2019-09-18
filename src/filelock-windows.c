@@ -169,15 +169,13 @@ int filelock__lock_timeout(HANDLE file, int exclusive, int timeout, int *locked)
   return 0;
 }
 
-SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout, SEXP delete_on_unlock) {
+SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   const char *c_path = CHAR(STRING_ELT(path, 0));
   int c_exclusive = LOGICAL(exclusive)[0];
   int c_timeout = INTEGER(timeout)[0];
-  int c_del_unlock = LOGICAL(delete_on_unlock)[0];
   int ret, locked = 1;		/* assume the best :) */
   HANDLE file;
   WCHAR *wpath;
-  DWORD flags;
 
   /* Check if this file was already locked. */
   filelock__list_t *node = filelock__list_find(c_path);
@@ -194,16 +192,13 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout, SEXP delete_on_unloc
 
   filelock__utf8_to_utf16_alloc(c_path, &wpath);
 
-  flags = FILE_FLAG_OVERLAPPED;
-  if (c_del_unlock) flags |= FILE_FLAG_DELETE_ON_CLOSE;
-
   file = CreateFileW(
     /* lpFilename = */            wpath,
     /* dwDesiredAccess = */       GENERIC_READ | GENERIC_WRITE,
     /* dwShareMode = */           FILE_SHARE_READ | FILE_SHARE_WRITE,
     /* lpSecurityAttributes = */  NULL,
     /* dwCreationDisposition = */ OPEN_ALWAYS,
-    /* dwFlagsAndAttributes = */  flags,
+    /* dwFlagsAndAttributes = */  FILE_FLAG_OVERLAPPED,
     /* hTemplateFile = */         NULL);
 
   if (file == INVALID_HANDLE_VALUE) {

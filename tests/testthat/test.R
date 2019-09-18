@@ -346,32 +346,3 @@ test_that("non-exclusive lock with timeout", {
   expect_s3_class(l, "filelock_lock")
   expect_true(unlock(l))
 })
-
-test_that("delete_on_unlock", {
-  lockfile <- tempfile()
-  l <- lock(lockfile, delete_on_unlock = TRUE)
-  expect_true(file.exists(lockfile))
-  unlock(l)
-  expect_false(file.exists(lockfile))
-})
-
-test_that("delete_on_unlock on existing file", {
-  lockfile <- tempfile()
-  cat("something\n", file = lockfile)
-  expect_equal(readLines(lockfile), "something")
-  l <- lock(lockfile, delete_on_unlock = TRUE)
-  expect_true(file.exists(lockfile))
-  unlock(l)
-  expect_false(file.exists(lockfile))
-})
-
-test_that("delete_on_unlock, on the second lock", {
-  lockfile <- tempfile()
-  l <- lock(lockfile, delete_on_unlock = FALSE)
-  l2 <- lock(lockfile, delete_on_unlock = TRUE)
-  expect_true(file.exists(lockfile))
-  unlock(l2)
-  expect_true(file.exists(lockfile))
-  unlock(l)
-  expect_false(file.exists(lockfile))
-})

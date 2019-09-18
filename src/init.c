@@ -2,7 +2,7 @@
 #include "filelock.h"
 
 static const R_CallMethodDef callMethods[]  = {
-  { "filelock_lock",        (DL_FUNC) &filelock_lock,         4 },
+  { "filelock_lock",        (DL_FUNC) &filelock_lock,         3 },
   { "filelock_unlock",      (DL_FUNC) &filelock_unlock,       1 },
   { "filelock_is_unlocked", (DL_FUNC) &filelock_is_unlocked,  1 },
   { NULL, NULL, 0 }

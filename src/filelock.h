@@ -7,8 +7,7 @@
 #include <windows.h>
 #endif
 
-SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout,
-		   SEXP delete_on_close);
+SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout);
 SEXP filelock_unlock(SEXP path);
 SEXP filelock_is_unlocked(SEXP lock);
 
@@ -23,7 +22,6 @@ typedef struct filelock__list_s {
   HANDLE file;
 #else
   int file;
-  int delete;
 #endif
   struct filelock__list_s *next;
 } filelock__list_t;
@@ -32,8 +30,7 @@ typedef struct filelock__list_s {
 #ifdef _WIN32
 SEXP filelock__list_add(const char *path, HANDLE file, int exclusive);
 #else
-SEXP filelock__list_add(const char *path, int file, int exclusive,
-                        int delete);
+SEXP filelock__list_add(const char *path, int file, int exclusive);
 #endif
 
 SEXP filelock__make_lock_handle(filelock__list_t *node);
