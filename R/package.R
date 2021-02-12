@@ -170,6 +170,9 @@ lock <- function(path, exclusive = TRUE, timeout = Inf) {
 #' @rdname lock
 
 unlock <- function(lock) {
+  if (!inherits(lock, "filelock_lock")) {
+    stop("`unlock()` needs a lock object, not a file name")
+  }
   .Call(c_filelock_unlock, lock)
 }
 

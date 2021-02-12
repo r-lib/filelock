@@ -346,3 +346,7 @@ test_that("non-exclusive lock with timeout", {
   expect_s3_class(l, "filelock_lock")
   expect_true(unlock(l))
 })
+
+test_that("unlock() needs lock object", {
+  expect_error(unlock(1), "needs a lock object")
+})
