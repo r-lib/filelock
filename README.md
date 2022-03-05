@@ -11,7 +11,7 @@ status](https://github.com/r-lib/filelock/workflows/R-CMD-check/badge.svg)](http
 [![CRAN RStudio mirror
 downloads](http://cranlogs.r-pkg.org/badges/filelock)](http://www.r-pkg.org/pkg/filelock)
 [![Coverage
-Status](https://img.shields.io/codecov/c/github/r-lib/filelock/master.svg)](https://codecov.io/github/r-lib/filelock?branch=master)
+Status](https://img.shields.io/codecov/c/github/r-lib/filelock/main.svg)](https://codecov.io/github/r-lib/filelock?branch=main)
 <!-- badges: end -->
 
 Place an exclusive or shared lock on a file. It uses `LockFile` on
