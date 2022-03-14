@@ -1,6 +1,4 @@
 
-context("filelock")
-
 test_that("can create a shared lock", {
 
   tmp <- tempfile()
