@@ -146,7 +146,6 @@
 #' @useDynLib filelock, .registration = TRUE, .fixes = "c_"
 
 lock <- function(path, exclusive = TRUE, timeout = Inf) {
-
   stopifnot(is_string(path))
   stopifnot(is_flag(exclusive))
   stopifnot(is_timeout(timeout))
