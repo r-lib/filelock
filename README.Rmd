@@ -17,8 +17,8 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![R build status](https://github.com/r-lib/filelock/workflows/R-CMD-check/badge.svg)](https://github.com/r-lib/filelock/actions)
-[![](http://www.r-pkg.org/badges/version/filelock)](http://www.r-pkg.org/pkg/filelock)
-[![CRAN RStudio mirror downloads](http://cranlogs.r-pkg.org/badges/filelock)](http://www.r-pkg.org/pkg/filelock)
+[![](https://www.r-pkg.org/badges/version/filelock)](https://www.r-pkg.org/pkg/filelock)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/filelock)](https://www.r-pkg.org/pkg/filelock)
 [![Coverage Status](https://img.shields.io/codecov/c/github/r-lib/filelock/main.svg)](https://codecov.io/github/r-lib/filelock?branch=main)
 [![Codecov test coverage](https://codecov.io/gh/r-lib/filelock/branch/main/graph/badge.svg)](https://app.codecov.io/gh/r-lib/filelock?branch=main)
 [![R-CMD-check](https://github.com/r-lib/filelock/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-lib/filelock/actions/workflows/R-CMD-check.yaml)
@@ -164,7 +164,7 @@ Some important points:
 On Windows, `LockFileEx` is used to create the lock on the file.
 If a finite timeout is specified for the lock request, asynchronous
 (overlapped) I/O is used to wait for the locking event with a timeout.
-See more about `LockFileEx` here:
+See more about `LockFileEx` on the first hit here:
 https://msdn.microsoft.com/en-us/library/aa365203.aspx
 
 Some important points:
@@ -178,6 +178,12 @@ Some important points:
   Remember, always use a special lock file, instead of putting the lock
   on the main file, so that you are not affected by these problems.
 * Inherited handles do not provide access to the child process.
+
+## Code of Conduct
+
+Please note that the fs project is released with a
+[Contributor Code of Conduct](https://r-lib.github.io/filelock/CODE_OF_CONDUCT.html).
+By contributing to this project, you agree to abide by its terms.
 
 ## License
 

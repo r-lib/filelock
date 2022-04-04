@@ -1,6 +1,5 @@
 
 test_that("can create a shared lock", {
-
   tmp <- tempfile()
   expect_silent({
     lck <- lock(tmp, exclusive = FALSE)
@@ -9,7 +8,6 @@ test_that("can create a shared lock", {
 })
 
 test_that("can create an exclusive lock", {
-
   tmp <- tempfile()
   expect_silent({
     lck <- lock(tmp, exclusive = TRUE)
@@ -18,7 +16,6 @@ test_that("can create an exclusive lock", {
 })
 
 test_that("an exclusive lock really locks", {
-
   tmp <- tempfile()
   lck <- lock(tmp, exclusive = TRUE)
 
@@ -34,7 +31,6 @@ test_that("an exclusive lock really locks", {
 })
 
 test_that("can release a lock", {
-
   tmp <- tempfile()
   lck <- lock(tmp, exclusive = TRUE)
 
@@ -62,7 +58,6 @@ test_that("can release a lock", {
 })
 
 test_that("printing the lock", {
-
   tmp <- tempfile()
   lck <- lock(tmp, exclusive = TRUE)
 
@@ -75,7 +70,6 @@ test_that("printing the lock", {
 })
 
 test_that("finalizer works", {
-
   tmp <- tempfile()
   lck <- lock(tmp, exclusive = TRUE)
 
@@ -93,7 +87,6 @@ test_that("finalizer works", {
 })
 
 test_that("timeout", {
-
   tmp <- tempfile()
   lck <- lock(tmp, exclusive = TRUE)
 
@@ -136,7 +129,7 @@ test_that("timeout 2", {
   px2 <- callr::r_process$new(px2_opts)
 
   px2$wait(timeout = 5000)
-  if (! px2$is_alive()) {
+  if (!px2$is_alive()) {
     res <- px2$get_result()
     expect_equal(class(res), "filelock_lock")
   } else {
@@ -171,16 +164,14 @@ test_that("wait forever", {
   px1$kill()
   px2$wait(timeout = 2000)
   if (!px2$is_alive()) {
-     expect_true(px2$get_exit_status() == 0)
+    expect_true(px2$get_exit_status() == 0)
   } else {
     px2$kill()
     stop("psx2 still running, something is wrong")
   }
-
 })
 
 test_that("wait forever, lock released", {
-
   tmp <- tempfile()
 
   ## This process just finishes normally, and that releases the lock
@@ -200,7 +191,7 @@ test_that("wait forever, lock released", {
   px2 <- callr::r_process$new(px2_opts)
 
   px2$wait(timeout = 3000)
-  if (! px2$is_alive()) {
+  if (!px2$is_alive()) {
     res <- px2$get_result()
     expect_equal(class(res), "filelock_lock")
   } else {
@@ -275,7 +266,6 @@ test_that("lock reference counting", {
 })
 
 test_that("Multiple locks", {
-
   tmp <- tempfile()
   lck <- lock(tmp, exclusive = TRUE)
   lck2 <- lock(tmp, exclusive = TRUE)
@@ -305,7 +295,6 @@ test_that("Relocking does not affect unlocked locks", {
 })
 
 test_that("Multiple, incompatible lock types", {
-
   tmp <- tempfile()
   lck <- lock(tmp, exclusive = TRUE)
   expect_error(lock(tmp, exclusive = FALSE))
@@ -317,7 +306,6 @@ test_that("Multiple, incompatible lock types", {
 })
 
 test_that("UTF-8 filenames", {
-
   tmp <- paste(tempfile(), "-\u00fc.lock")
 
   ## We need to test it the file system supports UTF-8/Unicode file names

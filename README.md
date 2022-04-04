@@ -7,11 +7,14 @@
 
 [![R build
 status](https://github.com/r-lib/filelock/workflows/R-CMD-check/badge.svg)](https://github.com/r-lib/filelock/actions)
-[![](http://www.r-pkg.org/badges/version/filelock)](http://www.r-pkg.org/pkg/filelock)
+[![](https://www.r-pkg.org/badges/version/filelock)](https://www.r-pkg.org/pkg/filelock)
 [![CRAN RStudio mirror
-downloads](http://cranlogs.r-pkg.org/badges/filelock)](http://www.r-pkg.org/pkg/filelock)
+downloads](https://cranlogs.r-pkg.org/badges/filelock)](https://www.r-pkg.org/pkg/filelock)
 [![Coverage
 Status](https://img.shields.io/codecov/c/github/r-lib/filelock/main.svg)](https://codecov.io/github/r-lib/filelock?branch=main)
+[![Codecov test
+coverage](https://codecov.io/gh/r-lib/filelock/branch/main/graph/badge.svg)](https://app.codecov.io/gh/r-lib/filelock?branch=main)
+[![R-CMD-check](https://github.com/r-lib/filelock/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-lib/filelock/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 Place an exclusive or shared lock on a file. It uses `LockFile` on
@@ -33,7 +36,7 @@ library(filelock)
 
 This is R process 1, it gets an exclusive lock. If you want to lock file
 `myfile`, always create a separate lock file instead of placing the lock
-on this file directly\!
+on this file directly!
 
 ``` r
 R1> lck <- lock("/tmp/myfile.lck")
@@ -79,8 +82,8 @@ to a certain file, do *not* place the lock on this file. Create a
 special file, e.g. by appending `.lock` to the original file name and
 place the lock on that. (The `lock()` function creates the file for you,
 actually, if it does not exist.) Reading from or writing to a locked
-file has undefined behavior\! (See more about this below at the
-Internals Section.)
+file has undefined behavior! (See more about this below at the Internals
+Section.)
 
 It is hard to determine whether and when it is safe to remove these
 special files, so our current recommendation is just to leave them
@@ -134,18 +137,18 @@ the locks. You can read more about it here:
 
 Some important points:
 
-  - The lock is put on a file descriptor, which is kept open, until the
+-   The lock is put on a file descriptor, which is kept open, until the
     lock is released.
-  - A process can only have one kind of lock set for a given file.
-  - When any file descriptor for that file is closed by the process, all
+-   A process can only have one kind of lock set for a given file.
+-   When any file descriptor for that file is closed by the process, all
     of the locks that process holds on that file are released, even if
     the locks were made using other descriptors that remain open. Note
     that in R, using a one-shot function call to modify the file opens
     and closes a file descriptor to it, so the lock will be released.
     (This is one of the main reasons for using special lock files,
     instead of putting the lock on the actual file.)
-  - Locks are not inherited by child processes created using fork.
-  - For lock requests with finite timeout intervals, we set an alarm,
+-   Locks are not inherited by child processes created using fork.
+-   For lock requests with finite timeout intervals, we set an alarm,
     and temporarily install a signal handler for it. R is single
     threaded, so no other code can be running, while the process is
     waiting to acquire the lock. The signal handler is restored to its
@@ -161,12 +164,12 @@ Some important points:
 On Windows, `LockFileEx` is used to create the lock on the file. If a
 finite timeout is specified for the lock request, asynchronous
 (overlapped) I/O is used to wait for the locking event with a timeout.
-See more about `LockFileEx` here:
+See more about `LockFileEx` on the first hit here:
 <https://msdn.microsoft.com/en-us/library/aa365203.aspx>
 
 Some important points:
 
-  - `LockFileEx` locks are mandatory (as opposed to advisory), so indeed
+-   `LockFileEx` locks are mandatory (as opposed to advisory), so indeed
     no other processes have access to the locked file. Actually, even
     the locking process has no access to it through a different file
     handle, than the one used for locking. In general, R cannot read
@@ -175,7 +178,13 @@ Some important points:
     puzzling.) Remember, always use a special lock file, instead of
     putting the lock on the main file, so that you are not affected by
     these problems.
-  - Inherited handles do not provide access to the child process.
+-   Inherited handles do not provide access to the child process.
+
+## Code of Conduct
+
+Please note that the fs project is released with a [Contributor Code of
+Conduct](https://r-lib.github.io/filelock/CODE_OF_CONDUCT.html). By
+contributing to this project, you agree to abide by its terms.
 
 ## License
 
