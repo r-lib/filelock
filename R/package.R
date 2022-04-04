@@ -142,7 +142,6 @@
 #' ```
 #'
 #' @export
-#' @aliases filelock
 #' @useDynLib filelock, .registration = TRUE, .fixes = "c_"
 
 lock <- function(path, exclusive = TRUE, timeout = Inf) {

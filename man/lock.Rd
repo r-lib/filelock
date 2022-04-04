@@ -2,7 +2,6 @@
 % Please edit documentation in R/package.R
 \name{lock}
 \alias{lock}
-\alias{filelock}
 \alias{unlock}
 \title{Advisory File Locking and Unlocking}
 \usage{
@@ -138,7 +137,7 @@ anything, but other packages might.)
 On Windows, \code{LockFileEx} is used to create the lock on the file.
 If a finite timeout is specified for the lock request, asynchronous
 (overlapped) I/O is used to wait for the locking event with a timeout.
-See more about \code{LockFileEx} here:
+See more about \code{LockFileEx} on the first hit here:
 \url{https://www.google.com/search?q=LockFileEx}
 
 Some important points:
