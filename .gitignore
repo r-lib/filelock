@@ -5,3 +5,4 @@
 /src/filelock.dll
 /src/*.o
 /revdep
+docs
