@@ -1,24 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/404.html</loc>
+    <loc>https://r-lib.github.io/filelock/404.html</loc>
   </url>
   <url>
-    <loc>/LICENSE-text.html</loc>
+    <loc>https://r-lib.github.io/filelock/CODE_OF_CONDUCT.html</loc>
   </url>
   <url>
-    <loc>/authors.html</loc>
+    <loc>https://r-lib.github.io/filelock/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>/index.html</loc>
+    <loc>https://r-lib.github.io/filelock/authors.html</loc>
   </url>
   <url>
-    <loc>/news/index.html</loc>
+    <loc>https://r-lib.github.io/filelock/index.html</loc>
   </url>
   <url>
-    <loc>/reference/index.html</loc>
+    <loc>https://r-lib.github.io/filelock/news/index.html</loc>
   </url>
   <url>
-    <loc>/reference/lock.html</loc>
+    <loc>https://r-lib.github.io/filelock/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>https://r-lib.github.io/filelock/reference/lock.html</loc>
   </url>
 </urlset>
