@@ -166,6 +166,12 @@ Some important points:
   on the main file, so that you are not affected by these problems.
 * Inherited handles do not provide access to the child process.
 
+## Code of Conduct
+
+Please note that the fs project is released with a [Contributor Code of
+Conduct](https://r-lib.github.io/filelock/CODE_OF_CONDUCT.html). By
+contributing to this project, you agree to abide by its terms.
+
 ## License
 
 MIT © RStudio
