@@ -8,3 +8,8 @@
 ^src/filelock\.so\.dSYM$
 ^src/.*\.o$
 ^revdep$
+^\.github$
+^codecov\.yml$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
