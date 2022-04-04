@@ -139,7 +139,7 @@ On Windows, \code{LockFileEx} is used to create the lock on the file.
 If a finite timeout is specified for the lock request, asynchronous
 (overlapped) I/O is used to wait for the locking event with a timeout.
 See more about \code{LockFileEx} here:
-\url{https://msdn.microsoft.com/en-us/library/aa365203.aspx}
+\url{https://www.google.com/search?q=LockFileEx}
 
 Some important points:
 \itemize{

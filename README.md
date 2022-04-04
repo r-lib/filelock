@@ -7,9 +7,9 @@
 
 [![R build
 status](https://github.com/r-lib/filelock/workflows/R-CMD-check/badge.svg)](https://github.com/r-lib/filelock/actions)
-[![](http://www.r-pkg.org/badges/version/filelock)](http://www.r-pkg.org/pkg/filelock)
+[![](https://www.r-pkg.org/badges/version/filelock)](https://www.r-pkg.org/pkg/filelock)
 [![CRAN RStudio mirror
-downloads](http://cranlogs.r-pkg.org/badges/filelock)](http://www.r-pkg.org/pkg/filelock)
+downloads](https://cranlogs.r-pkg.org/badges/filelock)](https://www.r-pkg.org/pkg/filelock)
 [![Coverage
 Status](https://img.shields.io/codecov/c/github/r-lib/filelock/main.svg)](https://codecov.io/github/r-lib/filelock?branch=main)
 <!-- badges: end -->
@@ -162,7 +162,7 @@ On Windows, `LockFileEx` is used to create the lock on the file. If a
 finite timeout is specified for the lock request, asynchronous
 (overlapped) I/O is used to wait for the locking event with a timeout.
 See more about `LockFileEx` here:
-<https://msdn.microsoft.com/en-us/library/aa365203.aspx>
+<https://www.google.com/search?q=LockFileEx>
 
 Some important points:
 

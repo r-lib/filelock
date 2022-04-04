@@ -83,8 +83,8 @@
 #' On Windows, `LockFileEx` is used to create the lock on the file.
 #' If a finite timeout is specified for the lock request, asynchronous
 #' (overlapped) I/O is used to wait for the locking event with a timeout.
-#' See more about `LockFileEx` here:
-#' <https://msdn.microsoft.com/en-us/library/aa365203.aspx>
+#' See more about `LockFileEx` on the first hit here:
+#' <https://www.google.com/search?q=LockFileEx>
 #'
 #' Some important points:
 #' * `LockFileEx` locks are mandatory (as opposed to advisory), so indeed
