@@ -9,6 +9,7 @@ License: MIT + file LICENSE
 URL: https://github.com/r-lib/filelock#readme,
     https://r-lib.github.io/filelock/
 BugReports: https://github.com/r-lib/filelock/issues
+Depends: R (>= 3.4)
 Suggests:
     callr (>= 2.0.0),
     covr,
