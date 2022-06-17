@@ -68,11 +68,8 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="filelock">filelock<a class="anchor" aria-label="anchor" href="#filelock"></a>
 </h1></div>
-<blockquote>
-<p>Portable File Locking</p>
-</blockquote>
+<blockquote><p>Portable File Locking</p></blockquote>
 <!-- badges: start -->
-
 <p>Place an exclusive or shared lock on a file. It uses <code>LockFile</code> on Windows and <code>fcntl</code> locks on Unix-like systems.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -111,14 +108,14 @@
 <div class="section level3">
 <h3 id="warning">Warning<a class="anchor" aria-label="anchor" href="#warning"></a>
 </h3>
-<p>Always use special files for locking. I.e. if you want to restict access to a certain file, do <em>not</em> place the lock on this file. Create a special file, e.g. by appending <code>.lock</code> to the original file name and place the lock on that. (The <code><a href="reference/lock.html">lock()</a></code> function creates the file for you, actually, if it does not exist.) Reading from or writing to a locked file has undefined behavior! (See more about this below at the Internals Section.)</p>
+<p>Always use special files for locking. I.e. if you want to restrict access to a certain file, do <em>not</em> place the lock on this file. Create a special file, e.g. by appending <code>.lock</code> to the original file name and place the lock on that. (The <code><a href="reference/lock.html">lock()</a></code> function creates the file for you, actually, if it does not exist.) Reading from or writing to a locked file has undefined behavior! (See more about this below at the Internals Section.)</p>
 <p>It is hard to determine whether and when it is safe to remove these special files, so our current recommendation is just to leave them around.</p>
 <p>It is best to leave the special lock file empty, simply because on some OSes you cannot write to it (or read from it), once the lock is in place.</p>
 </div>
 <div class="section level3">
 <h3 id="advisory-locks">Advisory Locks:<a class="anchor" aria-label="anchor" href="#advisory-locks"></a>
 </h3>
-<p>All locks set by this package might be advisory. A process that does not respect this locking machanism may be able to read and write the locked file, or even remove it (assuming it has capabilities to do so).</p>
+<p>All locks set by this package might be advisory. A process that does not respect this locking mechanism may be able to read and write the locked file, or even remove it (assuming it has capabilities to do so).</p>
 </div>
 <div class="section level3">
 <h3 id="unlock-on-termination">Unlock on Termination:<a class="anchor" aria-label="anchor" href="#unlock-on-termination"></a>
@@ -135,7 +132,7 @@
 <div class="section level3">
 <h3 id="locking-part-of-a-file">Locking Part of a File:<a class="anchor" aria-label="anchor" href="#locking-part-of-a-file"></a>
 </h3>
-<p>While this is possible in general, <code>filelock</code> does not suport it currently. The main purpose of <code>filelock</code> is to lock using special lock files, and locking part of these is not really useful.</p>
+<p>While this is possible in general, <code>filelock</code> does not support it currently. The main purpose of <code>filelock</code> is to lock using special lock files, and locking part of these is not really useful.</p>
 </div>
 <div class="section level3">
 <h3 id="internals-on-unix">Internals on Unix:<a class="anchor" aria-label="anchor" href="#internals-on-unix"></a>
@@ -240,7 +237,7 @@
 
 <div class="pkgdown-footer-right">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
   </div></footer>

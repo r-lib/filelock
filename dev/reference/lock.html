@@ -67,6 +67,8 @@ will be created, but the directory of the file must exist.
 <em>Do not place the lock on a file that you want to
 read from or write to!</em> *Always use a special lock file. See details
 below.</p></dd>
+
+
 <dt>exclusive</dt>
 <dd><p>Whether to acquire an exclusive lock. An exclusive
 lock gives the process exclusive access to the file, no other
@@ -75,21 +77,30 @@ shared lock. Multiple processes can hold a shared lock on the same
 file. A process that writes to a file typically requests an
 exclusive lock, and a process that reads from it typically requests a
 shared lock.</p></dd>
+
+
 <dt>timeout</dt>
 <dd><p>Timeout to acquire the lock in milliseconds. If <code>Inf</code>,
 then the process will wait indefinitely to acquire the lock. If zero,
 then the function it returns immediately, with or without acquiring
 the lock</p></dd>
+
+
 <dt>lock</dt>
 <dd><p>The lock object to unlock. It is not an error to try to
 unlock an already unlocked lock. It is not possible to lock an
 unlocked lock again, a new lock has to be requested.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>lock</code> returns a <code>filelock_lock</code> object if the lock was
-successfully acquired, and <code>NULL</code> if a timeout happened.
-<code>unlock</code> returns <code>TRUE</code>, always.</p>
+    
+
+<p><code>lock</code> returns a <code>filelock_lock</code> object if the lock was
+successfully acquired, and <code>NULL</code> if a timeout happened.</p>
+
+
+<p><code>unlock</code> returns <code>TRUE</code>, always.</p>
     </div>
     <div class="section level2">
     <h2 id="warning">Warning<a class="anchor" aria-label="anchor" href="#warning"></a></h2>
@@ -229,7 +240,7 @@ on the main file, so that you are not affected by these problems.</p></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
   </div></footer></body></html>
