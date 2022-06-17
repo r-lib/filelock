@@ -77,7 +77,7 @@ R2> lock("/tmp/myfile.lck")
 
 ### Warning
 
-Always use special files for locking. I.e. if you want to restict access
+Always use special files for locking. I.e. if you want to restrict access
 to a certain file, do *not* place the lock on this file. Create a
 special file, e.g. by appending `.lock` to the original file name and
 place the lock on that. (The `lock()` function creates the file for you,
@@ -96,7 +96,7 @@ place.
 ### Advisory Locks:
 
 All locks set by this package might be advisory. A process that does not
-respect this locking machanism may be able to read and write the locked
+respect this locking mechanism may be able to read and write the locked
 file, or even remove it (assuming it has capabilities to do so).
 
 ### Unlock on Termination:
@@ -125,7 +125,7 @@ currently.
 
 ### Locking Part of a File:
 
-While this is possible in general, `filelock` does not suport it
+While this is possible in general, `filelock` does not support it
 currently. The main purpose of `filelock` is to lock using special lock
 files, and locking part of these is not really useful.
 
