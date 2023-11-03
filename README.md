@@ -28,6 +28,12 @@ Install the package from CRAN as usual:
 install.packages("filelock")
 ```
 
+Install the development version from GitHub:
+
+``` r
+pak::pak("r-lib/filelock")
+```
+
 ## Usage
 
 ``` r
@@ -77,7 +83,7 @@ R2> lock("/tmp/myfile.lck")
 
 ### Warning
 
-Always use special files for locking. I.e. if you want to restrict access
+Always use special files for locking. I.e. if you want to restict access
 to a certain file, do *not* place the lock on this file. Create a
 special file, e.g. by appending `.lock` to the original file name and
 place the lock on that. (The `lock()` function creates the file for you,
@@ -96,7 +102,7 @@ place.
 ### Advisory Locks:
 
 All locks set by this package might be advisory. A process that does not
-respect this locking mechanism may be able to read and write the locked
+respect this locking machanism may be able to read and write the locked
 file, or even remove it (assuming it has capabilities to do so).
 
 ### Unlock on Termination:
@@ -125,7 +131,7 @@ currently.
 
 ### Locking Part of a File:
 
-While this is possible in general, `filelock` does not support it
+While this is possible in general, `filelock` does not suport it
 currently. The main purpose of `filelock` is to lock using special lock
 files, and locking part of these is not really useful.
 
@@ -137,27 +143,27 @@ the locks. You can read more about it here:
 
 Some important points:
 
--   The lock is put on a file descriptor, which is kept open, until the
-    lock is released.
--   A process can only have one kind of lock set for a given file.
--   When any file descriptor for that file is closed by the process, all
-    of the locks that process holds on that file are released, even if
-    the locks were made using other descriptors that remain open. Note
-    that in R, using a one-shot function call to modify the file opens
-    and closes a file descriptor to it, so the lock will be released.
-    (This is one of the main reasons for using special lock files,
-    instead of putting the lock on the actual file.)
--   Locks are not inherited by child processes created using fork.
--   For lock requests with finite timeout intervals, we set an alarm,
-    and temporarily install a signal handler for it. R is single
-    threaded, so no other code can be running, while the process is
-    waiting to acquire the lock. The signal handler is restored to its
-    original value immediately after the lock is acquired or the timeout
-    expires. (It is actually restored from the signal handler, so there
-    should be no race conditions here. However, if multiple `SIGALRM`
-    signals are delivered via a single call to the signal handler, then
-    alarms might get lost. Currently base R does not use the `SIGALRM`
-    signal for anything, but other packages might.)
+- The lock is put on a file descriptor, which is kept open, until the
+  lock is released.
+- A process can only have one kind of lock set for a given file.
+- When any file descriptor for that file is closed by the process, all
+  of the locks that process holds on that file are released, even if the
+  locks were made using other descriptors that remain open. Note that in
+  R, using a one-shot function call to modify the file opens and closes
+  a file descriptor to it, so the lock will be released. (This is one of
+  the main reasons for using special lock files, instead of putting the
+  lock on the actual file.)
+- Locks are not inherited by child processes created using fork.
+- For lock requests with finite timeout intervals, we set an alarm, and
+  temporarily install a signal handler for it. R is single threaded, so
+  no other code can be running, while the process is waiting to acquire
+  the lock. The signal handler is restored to its original value
+  immediately after the lock is acquired or the timeout expires. (It is
+  actually restored from the signal handler, so there should be no race
+  conditions here. However, if multiple `SIGALRM` signals are delivered
+  via a single call to the signal handler, then alarms might get lost.
+  Currently base R does not use the `SIGALRM` signal for anything, but
+  other packages might.)
 
 ### Internals on Windows:
 
@@ -169,16 +175,15 @@ See more about `LockFileEx` on the first hit here:
 
 Some important points:
 
--   `LockFileEx` locks are mandatory (as opposed to advisory), so indeed
-    no other processes have access to the locked file. Actually, even
-    the locking process has no access to it through a different file
-    handle, than the one used for locking. In general, R cannot read
-    from the locked file, and cannot write to it. (Although, the current
-    R version does not fail, it just does nothing, which is quite
-    puzzling.) Remember, always use a special lock file, instead of
-    putting the lock on the main file, so that you are not affected by
-    these problems.
--   Inherited handles do not provide access to the child process.
+- `LockFileEx` locks are mandatory (as opposed to advisory), so indeed
+  no other processes have access to the locked file. Actually, even the
+  locking process has no access to it through a different file handle,
+  than the one used for locking. In general, R cannot read from the
+  locked file, and cannot write to it. (Although, the current R version
+  does not fail, it just does nothing, which is quite puzzling.)
+  Remember, always use a special lock file, instead of putting the lock
+  on the main file, so that you are not affected by these problems.
+- Inherited handles do not provide access to the child process.
 
 ## Code of Conduct
 
