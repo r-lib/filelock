@@ -155,7 +155,9 @@ on the main file, so that you are not affected by these problems.
 }
 
 \section{Examples}{
-\preformatted{## -------------------------------------------------------------
+
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{## -------------------------------------------------------------
 ## R process 1 gets an exclusive lock
 ## Warning: if you want to lock file 'myfile', always create a
 ## separate lock file instead of placing the lock on this file directly!
@@ -170,6 +172,6 @@ lock(mylockfile, timeout = 5000)
 
 ## Wait indefinetely
 lock(mylockfile, timeout = Inf)
-}
+}\if{html}{\out{</div>}}
 }
 
