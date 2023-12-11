@@ -1,5 +1,4 @@
-
-# filelock development version
+# filelock 1.0.3
 
 * No user visible changes.
 
