@@ -10,6 +10,9 @@
     <loc>https://r-lib.github.io/filelock/LICENSE-text.html</loc>
   </url>
   <url>
+    <loc>https://r-lib.github.io/filelock/LICENSE.html</loc>
+  </url>
+  <url>
     <loc>https://r-lib.github.io/filelock/authors.html</loc>
   </url>
   <url>
@@ -17,6 +20,9 @@
   </url>
   <url>
     <loc>https://r-lib.github.io/filelock/news/index.html</loc>
+  </url>
+  <url>
+    <loc>https://r-lib.github.io/filelock/reference/filelock-package.html</loc>
   </url>
   <url>
     <loc>https://r-lib.github.io/filelock/reference/index.html</loc>
