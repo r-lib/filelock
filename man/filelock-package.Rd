@@ -11,8 +11,8 @@ Place an exclusive or shared lock on a file. It uses 'LockFile' on Windows and '
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/r-lib/filelock#readme}
   \item \url{https://r-lib.github.io/filelock/}
+  \item \url{https://github.com/r-lib/filelock}
   \item Report bugs at \url{https://github.com/r-lib/filelock/issues}
 }
 

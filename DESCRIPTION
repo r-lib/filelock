@@ -8,8 +8,7 @@ Authors@R: c(
 Description: Place an exclusive or shared lock on a file. It uses
     'LockFile' on Windows and 'fcntl' locks on Unix-like systems.
 License: MIT + file LICENSE
-URL: https://github.com/r-lib/filelock#readme,
-    https://r-lib.github.io/filelock/
+URL: https://r-lib.github.io/filelock/, https://github.com/r-lib/filelock
 BugReports: https://github.com/r-lib/filelock/issues
 Depends: 
     R (>= 3.4)
