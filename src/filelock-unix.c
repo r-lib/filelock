@@ -16,6 +16,8 @@
 
 struct sigaction filelock_old_sa;
 
+foo
+
 void filelock__finalizer(SEXP x) {
   filelock__list_t *ptr = (filelock__list_t*) R_ExternalPtrAddr(x);
 
