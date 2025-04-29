@@ -293,11 +293,11 @@ test_that("Relocking does not affect unlocked locks", {
 test_that("Multiple, incompatible lock types", {
   tmp <- tempfile()
   lck <- lock(tmp, exclusive = TRUE)
-  expect_error(lock(tmp, exclusive = FALSE))
+  expect_snapshot(error = TRUE, lock(tmp, exclusive = FALSE))
   unlock(lck)
 
   lck <- lock(tmp, exclusive = FALSE)
-  expect_error(lock(tmp, exclusive = TRUE))
+  expect_snapshot(error = TRUE, lock(tmp, exclusive = TRUE))
   unlock(lck)
 })
 
@@ -330,5 +330,5 @@ test_that("non-exclusive lock with timeout", {
 })
 
 test_that("unlock() needs lock object", {
-  expect_error(unlock(1), "needs a lock object")
+  expect_snapshot(error = TRUE, unlock(1))
 })
