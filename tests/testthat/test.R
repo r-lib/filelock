@@ -1,4 +1,3 @@
-
 test_that("can create a shared lock", {
   tmp <- tempfile()
   expect_silent({
@@ -106,7 +105,6 @@ test_that("timeout", {
 })
 
 test_that("timeout 2", {
-
   ## They don't like tests with timings on CRAN
   skip_on_cran()
 
@@ -140,7 +138,6 @@ test_that("timeout 2", {
 })
 
 test_that("wait forever", {
-
   ## Thy don't like tests with timings on CRAN
   skip_on_cran()
 
@@ -277,7 +274,6 @@ test_that("Multiple locks", {
 
 test_that("Relocking does not affect unlocked locks", {
   tmp <- tempfile()
-
 
   lck <- lock(tmp, exclusive = TRUE)
   lck2 <- lock(tmp, exclusive = TRUE)
