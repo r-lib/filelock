@@ -1,8 +1,8 @@
 pandoc: 3.1.11
-pkgdown: 2.1.0
+pkgdown: 2.1.1
 pkgdown_sha: ~
 articles: {}
-last_built: 2024-08-05T15:45Z
+last_built: 2025-04-29T12:19Z
 urls:
   reference: https://r-lib.github.io/filelock/reference
   article: https://r-lib.github.io/filelock/articles
