@@ -2,7 +2,10 @@
 output: github_document
 ---
 
-```{r, setup, echo = FALSE, message = FALSE}
+```{r}
+#| label: setup
+#| echo: false
+#| message: false
 knitr::opts_chunk$set(
   comment = "#>",
   tidy = FALSE,
@@ -31,13 +34,15 @@ and `fcntl` locks on Unix-like systems.
 
 Install the package from CRAN as usual:
 
-```{r eval = FALSE}
+```{r}
+#| eval: false
 install.packages("filelock")
 ```
 
 Install the development version from GitHub:
 
-```{r eval = FALSE}
+```{r}
+#| eval: false
 pak::pak("r-lib/filelock")
 ```
 
