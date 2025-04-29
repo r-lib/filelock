@@ -10,11 +10,9 @@ status](https://github.com/r-lib/filelock/workflows/R-CMD-check/badge.svg)](http
 [![](https://www.r-pkg.org/badges/version/filelock)](https://www.r-pkg.org/pkg/filelock)
 [![CRAN RStudio mirror
 downloads](https://cranlogs.r-pkg.org/badges/filelock)](https://www.r-pkg.org/pkg/filelock)
-[![Coverage
-Status](https://img.shields.io/codecov/c/github/r-lib/filelock/main.svg)](https://app.codecov.io/github/r-lib/filelock?branch=main)
-[![Codecov test
-coverage](https://codecov.io/gh/r-lib/filelock/branch/main/graph/badge.svg)](https://app.codecov.io/gh/r-lib/filelock?branch=main)
 [![R-CMD-check](https://github.com/r-lib/filelock/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-lib/filelock/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/r-lib/filelock/graph/badge.svg)](https://app.codecov.io/gh/r-lib/filelock)
 <!-- badges: end -->
 
 Place an exclusive or shared lock on a file. It uses `LockFile` on
@@ -143,27 +141,27 @@ the locks. You can read more about it here:
 
 Some important points:
 
-- The lock is put on a file descriptor, which is kept open, until the
-  lock is released.
-- A process can only have one kind of lock set for a given file.
-- When any file descriptor for that file is closed by the process, all
-  of the locks that process holds on that file are released, even if the
-  locks were made using other descriptors that remain open. Note that in
-  R, using a one-shot function call to modify the file opens and closes
-  a file descriptor to it, so the lock will be released. (This is one of
-  the main reasons for using special lock files, instead of putting the
-  lock on the actual file.)
-- Locks are not inherited by child processes created using fork.
-- For lock requests with finite timeout intervals, we set an alarm, and
-  temporarily install a signal handler for it. R is single threaded, so
-  no other code can be running, while the process is waiting to acquire
-  the lock. The signal handler is restored to its original value
-  immediately after the lock is acquired or the timeout expires. (It is
-  actually restored from the signal handler, so there should be no race
-  conditions here. However, if multiple `SIGALRM` signals are delivered
-  via a single call to the signal handler, then alarms might get lost.
-  Currently base R does not use the `SIGALRM` signal for anything, but
-  other packages might.)
+-   The lock is put on a file descriptor, which is kept open, until the
+    lock is released.
+-   A process can only have one kind of lock set for a given file.
+-   When any file descriptor for that file is closed by the process, all
+    of the locks that process holds on that file are released, even if
+    the locks were made using other descriptors that remain open. Note
+    that in R, using a one-shot function call to modify the file opens
+    and closes a file descriptor to it, so the lock will be released.
+    (This is one of the main reasons for using special lock files,
+    instead of putting the lock on the actual file.)
+-   Locks are not inherited by child processes created using fork.
+-   For lock requests with finite timeout intervals, we set an alarm,
+    and temporarily install a signal handler for it. R is single
+    threaded, so no other code can be running, while the process is
+    waiting to acquire the lock. The signal handler is restored to its
+    original value immediately after the lock is acquired or the timeout
+    expires. (It is actually restored from the signal handler, so there
+    should be no race conditions here. However, if multiple `SIGALRM`
+    signals are delivered via a single call to the signal handler, then
+    alarms might get lost. Currently base R does not use the `SIGALRM`
+    signal for anything, but other packages might.)
 
 ### Internals on Windows:
 
@@ -175,15 +173,16 @@ See more about `LockFileEx` on the first hit here:
 
 Some important points:
 
-- `LockFileEx` locks are mandatory (as opposed to advisory), so indeed
-  no other processes have access to the locked file. Actually, even the
-  locking process has no access to it through a different file handle,
-  than the one used for locking. In general, R cannot read from the
-  locked file, and cannot write to it. (Although, the current R version
-  does not fail, it just does nothing, which is quite puzzling.)
-  Remember, always use a special lock file, instead of putting the lock
-  on the main file, so that you are not affected by these problems.
-- Inherited handles do not provide access to the child process.
+-   `LockFileEx` locks are mandatory (as opposed to advisory), so indeed
+    no other processes have access to the locked file. Actually, even
+    the locking process has no access to it through a different file
+    handle, than the one used for locking. In general, R cannot read
+    from the locked file, and cannot write to it. (Although, the current
+    R version does not fail, it just does nothing, which is quite
+    puzzling.) Remember, always use a special lock file, instead of
+    putting the lock on the main file, so that you are not affected by
+    these problems.
+-   Inherited handles do not provide access to the child process.
 
 ## Code of Conduct
 

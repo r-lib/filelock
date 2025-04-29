@@ -1,4 +1,3 @@
-
 #' Advisory File Locking and Unlocking
 #'
 #' There are two kinds of locks, *exclusive* and *shared*, see the
@@ -180,7 +179,8 @@ print.filelock_lock <- function(x, ...) {
   unlocked <- .Call(c_filelock_is_unlocked, x)
   cat(
     if (unlocked) "Unlocked lock on " else "Lock on ",
-    sQuote(x[[2]]), "\n",
+    sQuote(x[[2]]),
+    "\n",
     sep = ""
   )
   invisible(x)
