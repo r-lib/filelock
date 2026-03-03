@@ -342,6 +342,7 @@ test_that("clean up file descriptor on interrupt", {
   tmp <- tempfile()
   l <- filelock::lock(tmp)
   rs <- callr::r_session$new()
+  on.exit(rs$close(), add = TRUE)
   rs$call(
     function(path) .GlobalEnv$lock <- filelock::lock(path),
     list(tmp)
@@ -372,6 +373,7 @@ test_that("clean up file descriptor on timeout", {
   tmp <- tempfile()
   l <- filelock::lock(tmp)
   rs <- callr::r_session$new()
+  on.exit(rs$close(), add = TRUE)
   rs$call(
     function(path) .GlobalEnv$lock <- filelock::lock(path, timeout = 10),
     list(tmp)
