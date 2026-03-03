@@ -1,5 +1,5 @@
 
-OBJECTS = init.o filelock-windows.o locklist.o utf8.o
+OBJECTS = init.o filelock-windows.o locklist.o utf8.o cleancall.o
 
 all: clean
 

@@ -308,13 +308,17 @@ test_that("UTF-8 filenames", {
   good <- tryCatch(
     {
       cat("hello\n", file = tmp)
-      if (readLines(tmp) != "hello") stop("Not good")
+      if (readLines(tmp) != "hello") {
+        stop("Not good")
+      }
       unlink(tmp)
       TRUE
     },
     error = function(e) FALSE
   )
-  if (identical(good, FALSE)) skip("FS does not support Unicode file names")
+  if (identical(good, FALSE)) {
+    skip("FS does not support Unicode file names")
+  }
 
   expect_silent(l <- lock(tmp))
   expect_equal(Encoding(l[[2]]), "UTF-8")
@@ -331,4 +335,56 @@ test_that("non-exclusive lock with timeout", {
 
 test_that("unlock() needs lock object", {
   expect_snapshot(error = TRUE, unlock(1))
+})
+
+test_that("clean up file descriptor on interrupt", {
+  skip_on_cran()
+  tmp <- tempfile()
+  l <- filelock::lock(tmp)
+  rs <- callr::r_session$new()
+  on.exit(rs$close(), add = TRUE)
+  rs$call(
+    function(path) .GlobalEnv$lock <- filelock::lock(path),
+    list(tmp)
+  )
+  deadline <- Sys.time() + as.difftime(2, units = "secs")
+  while (Sys.time() < deadline) {
+    of <- ps::ps_open_files(ps::ps_handle(rs$get_pid()))
+    if (normalizePath(tmp) %in% normalizePath(of$path)) {
+      break
+    }
+  }
+  expect_true(normalizePath(tmp) %in% normalizePath(of$path))
+
+  rs$interrupt()
+
+  deadline <- Sys.time() + as.difftime(2, units = "secs")
+  while (Sys.time() < deadline) {
+    of2 <- ps::ps_open_files(ps::ps_handle(rs$get_pid()))
+    if (!normalizePath(tmp) %in% normalizePath(of2$path)) {
+      break
+    }
+  }
+  expect_false(normalizePath(tmp) %in% normalizePath(of2$path))
+})
+
+test_that("clean up file descriptor on timeout", {
+  skip_on_cran()
+  tmp <- tempfile()
+  l <- filelock::lock(tmp)
+  rs <- callr::r_session$new()
+  on.exit(rs$close(), add = TRUE)
+  rs$call(
+    function(path) .GlobalEnv$lock <- filelock::lock(path, timeout = 10),
+    list(tmp)
+  )
+  rs$poll_io(1000)
+  deadline <- Sys.time() + as.difftime(2, units = "secs")
+  while (Sys.time() < deadline) {
+    of <- ps::ps_open_files(ps::ps_handle(rs$get_pid()))
+    if (!normalizePath(tmp) %in% normalizePath(of$path)) {
+      break
+    }
+  }
+  expect_true(!normalizePath(tmp) %in% normalizePath(of$path))
 })

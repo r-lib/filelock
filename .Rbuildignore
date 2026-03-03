@@ -17,3 +17,5 @@
 ^CRAN-SUBMISSION$
 ^[\.]?air\.toml$
 ^\.vscode$
+^[.]dev$
+^[.]covrignore$
