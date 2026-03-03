@@ -1,5 +1,5 @@
 
-OBJECTS = init.o filelock-unix.o locklist.o
+OBJECTS = init.o filelock-unix.o locklist.o cleancall.o
 
 all: clean
 

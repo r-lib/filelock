@@ -6,3 +6,4 @@
 /src/*.o
 /revdep
 docs
+/.dev

@@ -3,6 +3,8 @@
 #include <R_ext/Rdynload.h>
 #include <Rinternals.h>
 
+#include "cleancall.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
