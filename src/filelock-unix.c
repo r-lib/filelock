@@ -166,6 +166,7 @@ static SEXP filelock_lock_worker(void *data)
   /* Failed to acquire the lock? */
   if (ret)
   {
+    close(args->filedes);
     return R_NilValue;
   }
   else

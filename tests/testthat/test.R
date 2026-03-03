@@ -366,3 +366,23 @@ test_that("clean up file descriptor on interrupt", {
   }
   expect_false(normalizePath(tmp) %in% normalizePath(of2$path))
 })
+
+test_that("clean up file descriptor on timeout", {
+  skip_on_cran()
+  tmp <- tempfile()
+  l <- filelock::lock(tmp)
+  rs <- callr::r_session$new()
+  rs$call(
+    function(path) .GlobalEnv$lock <- filelock::lock(path, timeout = 10),
+    list(tmp)
+  )
+  rs$poll_io(1000)
+  deadline <- Sys.time() + as.difftime(2, units = "secs")
+  while (Sys.time() < deadline) {
+    of <- ps::ps_open_files(ps::ps_handle(rs$get_pid()))
+    if (!normalizePath(tmp) %in% normalizePath(of$path)) {
+      break
+    }
+  }
+  expect_true(!normalizePath(tmp) %in% normalizePath(of$path))
+})
