@@ -292,12 +292,23 @@ test_that("Relocking does not affect unlocked locks", {
 
 test_that("Multiple, incompatible lock types", {
   tmp <- tempfile()
+  # The error message contains the lock file path, scrub it for stability
+  scrub_path <- function(x) gsub(normalizePath(tmp), "<path>", x, fixed = TRUE)
+
   lck <- lock(tmp, exclusive = TRUE)
-  expect_snapshot(error = TRUE, lock(tmp, exclusive = FALSE))
+  expect_snapshot(
+    error = TRUE,
+    lock(tmp, exclusive = FALSE),
+    transform = scrub_path
+  )
   unlock(lck)
 
   lck <- lock(tmp, exclusive = FALSE)
-  expect_snapshot(error = TRUE, lock(tmp, exclusive = TRUE))
+  expect_snapshot(
+    error = TRUE,
+    lock(tmp, exclusive = TRUE),
+    transform = scrub_path
+  )
   unlock(lck)
 })
 

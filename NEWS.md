@@ -1,7 +1,8 @@
 # filelock (development version)
 
 * Error messages now include the path of the lock file when locking fails,
-  e.g. `Cannot open lock file: '<path>': Permission denied` (#30).
+  and follow the tidyverse error style, e.g. "Can't open lock file
+  `<path>`: Permission denied." (#30).
 
 # filelock 1.0.3
 

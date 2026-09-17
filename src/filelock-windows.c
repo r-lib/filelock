@@ -21,6 +21,7 @@ int filelock__is_interrupt_pending(void) {
 void filelock__error(const char *str, const char *path, DWORD errorcode) {
   LPVOID lpMsgBuf;
   char *msg;
+  size_t len;
 
   FormatMessage(
     FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -36,7 +37,15 @@ void filelock__error(const char *str, const char *path, DWORD errorcode) {
   strcpy(msg, lpMsgBuf);
   LocalFree(lpMsgBuf);
 
-  error("Filelock error (%d), %s'%s': %s", (int) errorcode, str, path, msg);
+  /* Strip the trailing whitespace (CRLF) of the system error message */
+  len = strlen(msg);
+  while (len > 0 && (msg[len - 1] == '\r' || msg[len - 1] == '\n' ||
+		     msg[len - 1] == ' ')) {
+    msg[--len] = '\0';
+  }
+
+  error("Can't %s `%s`: %s (Windows error %d).",
+	str, path, msg, (int) errorcode);
 }
 
 void filelock__finalizer(SEXP x) {
@@ -87,7 +96,7 @@ int filelock__lock_wait(HANDLE file, int exclusive, const char *path) {
     while (1) {
       DWORD wres;
       if (err != ERROR_IO_PENDING) {
-	filelock__error("Locking file: ", path, err);
+	filelock__error("lock file", path, err);
       }
 
       wres = WaitForSingleObject(ov.hEvent, FILELOCK_INTERRUPT_INTERVAL);
@@ -99,7 +108,7 @@ int filelock__lock_wait(HANDLE file, int exclusive, const char *path) {
       } else if (wres == WAIT_FAILED) {
 	CancelIo(file);
 	CloseHandle(ov.hEvent);
-	filelock__error("Locking file (timeout): ", path, GetLastError());
+	filelock__error("lock file", path, GetLastError());
       }
 
       /* Check for interrupt and try again */
@@ -108,7 +117,7 @@ int filelock__lock_wait(HANDLE file, int exclusive, const char *path) {
 	CloseHandle(ov.hEvent);
 	UnlockFileEx(file, 0, 1, 0, &ov); /* ignore errors */
 	CloseHandle(file);		  /* ignore errors */
-	error("Locking interrupted for file: '%s'", path);
+	error("Locking interrupted for file `%s`.", path);
       }
     }
   }
@@ -138,7 +147,7 @@ int filelock__lock_timeout(HANDLE file, int exclusive, int timeout,
       int waitnow;
 
       if (err != ERROR_IO_PENDING) {
-	filelock__error("Locking file: ", path, err);
+	filelock__error("lock file", path, err);
       }
 
       waitnow = timeleft < FILELOCK_INTERRUPT_INTERVAL ? timeleft :
@@ -152,7 +161,7 @@ int filelock__lock_timeout(HANDLE file, int exclusive, int timeout,
       } else {
 	CancelIo(file);
 	CloseHandle(ov.hEvent);
-	filelock__error("Locking file (timeout): ", path, GetLastError());
+	filelock__error("lock file", path, GetLastError());
       }
 
       /* Check for interrupt and try again */
@@ -161,7 +170,7 @@ int filelock__lock_timeout(HANDLE file, int exclusive, int timeout,
 	CloseHandle(ov.hEvent);
 	UnlockFileEx(file, 0, 1, 0, &ov); /* ignore errors */
 	CloseHandle(file);		  /* ignore errors */
-	error("Locking interrupted for file: '%s'", path);
+	error("Locking interrupted for file `%s`.", path);
       }
       timeleft -= FILELOCK_INTERRUPT_INTERVAL;
     }
@@ -189,9 +198,9 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
 	(!c_exclusive && !node->exclusive)) {
       return filelock__make_lock_handle(node);
     } else if (c_exclusive) {
-      error("File already has a shared lock");
+      error("File `%s` already has a shared lock.", c_path);
     } else {
-      error("File already has an exclusive lock");
+      error("File `%s` already has an exclusive lock.", c_path);
     }
   }
 
@@ -207,7 +216,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
     /* hTemplateFile = */         NULL);
 
   if (file == INVALID_HANDLE_VALUE) {
-    filelock__error("Opening file: ", c_path, GetLastError());
+    filelock__error("open lock file", c_path, GetLastError());
   }
 
   /* Give it a try, fail immediately */
@@ -225,7 +234,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   }
 
   if (ret) {
-    filelock__error("Lock file: ", c_path, ret);
+    filelock__error("lock file", c_path, ret);
   }
 
   if (!locked) {

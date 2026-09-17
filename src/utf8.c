@@ -4,7 +4,7 @@
 
 #include "filelock.h"
 
-void filelock__error(const char *str, DWORD errorcode);
+void filelock__error(const char *str, const char *path, DWORD errorcode);
 
 int filelock__utf8_to_utf16_alloc(const char* s, WCHAR** ws_ptr) {
   int ws_len, r;
@@ -19,7 +19,7 @@ int filelock__utf8_to_utf16_alloc(const char* s, WCHAR** ws_ptr) {
     /* cchWideChar =    */ 0);
 
   if (ws_len <= 0) {
-    filelock__error("Cannot convert UTF8 file name to wide chararacter",
+    filelock__error("convert UTF-8 file name to wide character", s,
 		    GetLastError());
   }
 
@@ -34,7 +34,7 @@ int filelock__utf8_to_utf16_alloc(const char* s, WCHAR** ws_ptr) {
     /* cchWideChar =    */ ws_len);
 
   if (r != ws_len) {
-    error("filelock error interpreting UTF8 filename");
+    error("Can't interpret UTF-8 file name `%s`.", s);
   }
 
   *ws_ptr = ws;
