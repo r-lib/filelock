@@ -115,7 +115,9 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   lck.l_len = 0;
 
   filedes = open(c_path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-  if (filedes == -1) error("Cannot open lock file: %s", strerror(errno));
+  if (filedes == -1) {
+    error("Cannot open lock file: '%s': %s", c_path, strerror(errno));
+  }
 
   /* One shot only? Do not block if cannot lock */
   if (c_timeout == 0) {
