@@ -108,7 +108,7 @@ int filelock__lock_wait(HANDLE file, int exclusive, const char *path) {
       } else if (wres == WAIT_FAILED) {
 	CancelIo(file);
 	CloseHandle(ov.hEvent);
-	filelock__error("lock file", path, GetLastError());
+	filelock__error("lock file (timeout)", path, GetLastError());
       }
 
       /* Check for interrupt and try again */
@@ -161,7 +161,7 @@ int filelock__lock_timeout(HANDLE file, int exclusive, int timeout,
       } else {
 	CancelIo(file);
 	CloseHandle(ov.hEvent);
-	filelock__error("lock file", path, GetLastError());
+	filelock__error("lock file (timeout)", path, GetLastError());
       }
 
       /* Check for interrupt and try again */
