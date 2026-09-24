@@ -292,12 +292,26 @@ test_that("Relocking does not affect unlocked locks", {
 
 test_that("Multiple, incompatible lock types", {
   tmp <- tempfile()
+  # The error message contains the lock file path, scrub it for stability.
+  # lock() builds the path as file.path(normalizePath(dirname), basename),
+  # which mixes path separators on Windows.
+  msg_path <- file.path(normalizePath(dirname(tmp)), basename(tmp))
+  scrub_path <- function(x) gsub(msg_path, "<path>", x, fixed = TRUE)
+
   lck <- lock(tmp, exclusive = TRUE)
-  expect_snapshot(error = TRUE, lock(tmp, exclusive = FALSE))
+  expect_snapshot(
+    error = TRUE,
+    lock(tmp, exclusive = FALSE),
+    transform = scrub_path
+  )
   unlock(lck)
 
   lck <- lock(tmp, exclusive = FALSE)
-  expect_snapshot(error = TRUE, lock(tmp, exclusive = TRUE))
+  expect_snapshot(
+    error = TRUE,
+    lock(tmp, exclusive = TRUE),
+    transform = scrub_path
+  )
   unlock(lck)
 })
 
@@ -308,13 +322,17 @@ test_that("UTF-8 filenames", {
   good <- tryCatch(
     {
       cat("hello\n", file = tmp)
-      if (readLines(tmp) != "hello") stop("Not good")
+      if (readLines(tmp) != "hello") {
+        stop("Not good")
+      }
       unlink(tmp)
       TRUE
     },
     error = function(e) FALSE
   )
-  if (identical(good, FALSE)) skip("FS does not support Unicode file names")
+  if (identical(good, FALSE)) {
+    skip("FS does not support Unicode file names")
+  }
 
   expect_silent(l <- lock(tmp))
   expect_equal(Encoding(l[[2]]), "UTF-8")
@@ -331,4 +349,18 @@ test_that("non-exclusive lock with timeout", {
 
 test_that("unlock() needs lock object", {
   expect_snapshot(error = TRUE, unlock(1))
+})
+
+test_that("lock file path is included in the error message", {
+  # Directory permissions do not reliably restrict file creation on Windows
+  skip_on_os("windows")
+
+  dir <- tempfile()
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  Sys.chmod(dir, mode = "0555")
+  on.exit(Sys.chmod(dir, mode = "0755"), add = TRUE)
+
+  lck <- file.path(dir, "test.lock")
+  expect_error(lock(lck), normalizePath(dir), fixed = TRUE)
 })

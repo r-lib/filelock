@@ -149,12 +149,14 @@ lock <- function(path, exclusive = TRUE, timeout = Inf) {
   stopifnot(is_timeout(timeout))
 
   ## Inf if encoded as -1 in our C code
-  if (timeout == Inf) timeout <- -1L
+  if (timeout == Inf) {
+    timeout <- -1L
+  }
 
   dn <- dirname(path)
   ndn <- normalizePath(dn)
   if (!file.exists(ndn)) {
-    stop("Directory of lock file does not exist: '", dn, "'")
+    stop("Directory of lock file does not exist: `", dn, "`.")
   }
   path <- file.path(ndn, basename(path))
 

@@ -78,7 +78,7 @@ int filelock__interruptible(int filedes, struct flock *lck,
        If -1, but not EINTR, then a real error happened. */
     if (ret != -1) { ret = 0; break; }
     if (ret == -1 && errno != EINTR) {
-      error("Cannot lock file: '%s': %s", c_path, strerror(errno));
+      error("Can't lock file `%s`: %s.", c_path, strerror(errno));
     }
 
     /* Otherwise, need to wait, check for interrupts, and start over */
@@ -103,9 +103,9 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
 	(!c_exclusive && !node->exclusive)) {
       return filelock__make_lock_handle(node);
     } else if (c_exclusive) {
-      error("File already has a shared lock");
+      error("File `%s` already has a shared lock.", c_path);
     } else {
-      error("File already has an exclusive lock");
+      error("File `%s` already has an exclusive lock.", c_path);
     }
   }
 
@@ -115,7 +115,9 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
   lck.l_len = 0;
 
   filedes = open(c_path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-  if (filedes == -1) error("Cannot open lock file: %s", strerror(errno));
+  if (filedes == -1) {
+    error("Can't open lock file `%s`: %s.", c_path, strerror(errno));
+  }
 
   /* One shot only? Do not block if cannot lock */
   if (c_timeout == 0) {
@@ -124,7 +126,7 @@ SEXP filelock_lock(SEXP path, SEXP exclusive, SEXP timeout) {
       if (errno == EAGAIN || errno == EACCES) {
 	return R_NilValue;
       }
-      error("Cannot lock file: '%s': %s", c_path, strerror(errno));
+      error("Can't lock file `%s`: %s.", c_path, strerror(errno));
     }
 
   } else {

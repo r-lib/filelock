@@ -4,7 +4,7 @@
       lock(tmp, exclusive = FALSE)
     Condition
       Error in `lock()`:
-      ! File already has an exclusive lock
+      ! File `<path>` already has an exclusive lock.
 
 ---
 
@@ -12,7 +12,7 @@
       lock(tmp, exclusive = TRUE)
     Condition
       Error in `lock()`:
-      ! File already has a shared lock
+      ! File `<path>` already has a shared lock.
 
 # unlock() needs lock object
 
