@@ -15,6 +15,7 @@
 #define FILELOCK_INTERRUPT_INTERVAL 200
 
 struct sigaction filelock_old_sa;
+struct itimerval filelock_old_timer;
 
 void filelock__finalizer(SEXP x) {
   filelock__list_t *ptr = (filelock__list_t*) R_ExternalPtrAddr(x);
@@ -33,6 +34,8 @@ void filelock__finalizer(SEXP x) {
 void filelock__alarm_callback (int signum) {
   /* Restore signal handler */
   sigaction(SIGALRM, &filelock_old_sa, 0);
+  /* Restore timer state */
+  setitimer(ITIMER_REAL, &filelock_old_timer, 0);
 }
 
 int filelock__interruptible(int filedes, struct flock *lck,
@@ -63,7 +66,7 @@ int filelock__interruptible(int filedes, struct flock *lck,
     sa.sa_handler = &filelock__alarm_callback;
     sigaction(SIGALRM, &sa, &filelock_old_sa);
 
-    setitimer(ITIMER_REAL, &timer, 0);
+    setitimer(ITIMER_REAL, &timer, &filelock_old_timer);
     ret = fcntl(filedes, F_SETLKW, lck);
 
     /* We need to remove the timer here, to avoid getting a signal
