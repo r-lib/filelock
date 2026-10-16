@@ -364,3 +364,59 @@ test_that("lock file path is included in the error message", {
   lck <- file.path(dir, "test.lock")
   expect_error(lock(lck), normalizePath(dir), fixed = TRUE)
 })
+
+test_that("failed lock() does not leak a file descriptor (#28)", {
+  skip_on_cran()
+  tmp <- tempfile()
+  rs <- callr::r_session$new()
+  on.exit(rs$close(), add = TRUE)
+  rs$run(function(path) .GlobalEnv$lck <- filelock::lock(path), list(tmp))
+
+  n_open <- function() {
+    of <- ps::ps_open_files(ps::ps_handle())
+    sum(normalizePath(of$path, mustWork = FALSE) == normalizePath(tmp))
+  }
+  before <- n_open()
+  for (i in 1:5) {
+    expect_null(lock(tmp, timeout = 0))
+  }
+  for (i in 1:2) {
+    expect_null(lock(tmp, timeout = 100))
+  }
+  expect_equal(n_open(), before)
+})
+
+test_that("interrupted lock() does not leak a file descriptor (#28)", {
+  skip_on_cran()
+  tmp <- tempfile()
+  lck <- lock(tmp)
+  on.exit(unlock(lck), add = TRUE)
+  rs <- callr::r_session$new()
+  on.exit(rs$close(), add = TRUE)
+
+  is_open <- function() {
+    of <- ps::ps_open_files(ps::ps_handle(rs$get_pid()))
+    normalizePath(tmp) %in% normalizePath(of$path, mustWork = FALSE)
+  }
+  wait_for <- function(cond) {
+    deadline <- Sys.time() + as.difftime(5, units = "secs")
+    while (!cond() && Sys.time() < deadline) {
+      Sys.sleep(0.05)
+    }
+    cond()
+  }
+
+  rs$call(function(path) filelock::lock(path, timeout = Inf), list(tmp))
+  expect_true(wait_for(is_open))
+
+  rs$interrupt()
+  rs$poll_io(5000)
+  res <- rs$read()
+  if (.Platform$OS.type == "windows") {
+    ## the Windows wait closes the handle itself and reports the interrupt as an error
+    expect_match(conditionMessage(res$error$parent), "Locking interrupted", fixed = TRUE)
+  } else {
+    expect_s3_class(res$error$parent, "interrupt")
+  }
+  expect_true(wait_for(function() !is_open()))
+})

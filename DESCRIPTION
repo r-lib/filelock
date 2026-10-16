@@ -12,10 +12,11 @@ License: MIT + file LICENSE
 URL: https://r-lib.github.io/filelock/, https://github.com/r-lib/filelock
 BugReports: https://github.com/r-lib/filelock/issues
 Depends: 
-    R (>= 3.4)
+    R (>= 3.5)
 Suggests:
     callr (>= 2.0.0),
     covr,
+    ps,
     testthat (>= 3.0.0)
 Config/Needs/website: tidyverse/tidytemplate
 Config/testthat/edition: 3
